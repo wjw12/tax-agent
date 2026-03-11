@@ -1,0 +1,28 @@
+{
+  "form_code": "1040-Schedule-8812",
+  "tax_year": 2025,
+  "modified_agi": 135000,
+  "tax_liability_before_credits": 7800,
+  "earned_income": 125000,
+  "qualifying_children": [
+    {
+      "first_name": "Taylor",
+      "last_name": "Example",
+      "ssn": "444-44-4444",
+      "relationship": "Child",
+      "date_of_birth": "2016-06-05",
+      "months_lived_with_taxpayer": 12
+    }
+  ],
+  "other_dependents": [
+    {
+      "first_name": "Pat",
+      "last_name": "Example",
+      "ssn": "555-55-5555",
+      "relationship": "Parent"
+    }
+  ],
+  "child_tax_credit_per_child": 2000,
+  "credit_for_other_dependents": 500,
+  "phaseout_threshold": 400000
+}

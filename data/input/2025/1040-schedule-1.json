@@ -1,0 +1,24 @@
+{
+  "form_code": "1040-Schedule-1",
+  "tax_year": 2025,
+  "additional_income_items": [
+    {
+      "description": "1099-MISC other income",
+      "amount": 900
+    },
+    {
+      "description": "Taxable refund",
+      "amount": 600
+    }
+  ],
+  "adjustment_items": [
+    {
+      "description": "Self-employed health insurance",
+      "amount": 500
+    },
+    {
+      "description": "Student loan interest",
+      "amount": 350
+    }
+  ]
+}

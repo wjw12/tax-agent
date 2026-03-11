@@ -1,0 +1,12 @@
+{
+  "form_code": "8889",
+  "tax_year": 2025,
+  "coverage_type": "self",
+  "months_eligible": 12,
+  "taxpayer_contributions": 2500,
+  "employer_contributions": 1200,
+  "distributions": 600,
+  "qualified_medical_expenses": 600,
+  "age_55_or_older": false,
+  "prior_year_excess_contributions": 0
+}

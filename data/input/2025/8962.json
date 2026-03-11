@@ -1,0 +1,82 @@
+{
+  "form_code": "8962",
+  "tax_year": 2025,
+  "household_income": 52000,
+  "household_size": 2,
+  "federal_poverty_line": 21150,
+  "annual_contribution_percentage": 0.035,
+  "monthly_entries": [
+    {
+      "month": "january",
+      "enrollment_premiums": 550,
+      "slcsp_premiums": 620,
+      "advance_payment_ptc": 150
+    },
+    {
+      "month": "february",
+      "enrollment_premiums": 550,
+      "slcsp_premiums": 620,
+      "advance_payment_ptc": 150
+    },
+    {
+      "month": "march",
+      "enrollment_premiums": 550,
+      "slcsp_premiums": 620,
+      "advance_payment_ptc": 150
+    },
+    {
+      "month": "april",
+      "enrollment_premiums": 550,
+      "slcsp_premiums": 620,
+      "advance_payment_ptc": 150
+    },
+    {
+      "month": "may",
+      "enrollment_premiums": 550,
+      "slcsp_premiums": 620,
+      "advance_payment_ptc": 150
+    },
+    {
+      "month": "june",
+      "enrollment_premiums": 550,
+      "slcsp_premiums": 620,
+      "advance_payment_ptc": 150
+    },
+    {
+      "month": "july",
+      "enrollment_premiums": 550,
+      "slcsp_premiums": 620,
+      "advance_payment_ptc": 150
+    },
+    {
+      "month": "august",
+      "enrollment_premiums": 550,
+      "slcsp_premiums": 620,
+      "advance_payment_ptc": 150
+    },
+    {
+      "month": "september",
+      "enrollment_premiums": 550,
+      "slcsp_premiums": 620,
+      "advance_payment_ptc": 150
+    },
+    {
+      "month": "october",
+      "enrollment_premiums": 550,
+      "slcsp_premiums": 620,
+      "advance_payment_ptc": 150
+    },
+    {
+      "month": "november",
+      "enrollment_premiums": 550,
+      "slcsp_premiums": 620,
+      "advance_payment_ptc": 150
+    },
+    {
+      "month": "december",
+      "enrollment_premiums": 550,
+      "slcsp_premiums": 620,
+      "advance_payment_ptc": 150
+    }
+  ]
+}

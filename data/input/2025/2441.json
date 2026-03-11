@@ -1,0 +1,29 @@
+{
+  "form_code": "2441",
+  "tax_year": 2025,
+  "taxpayer_earned_income": 72000,
+  "spouse_earned_income": 48000,
+  "providers": [
+    {
+      "name": "Bright Kids Daycare",
+      "tin": "12-3456789",
+      "address": {
+        "line1": "500 Care Way",
+        "city": "Seattle",
+        "state": "WA",
+        "postal_code": "98109"
+      },
+      "amount_paid": 5400
+    }
+  ],
+  "qualifying_persons": [
+    {
+      "first_name": "Riley",
+      "last_name": "Example",
+      "ssn": "666-66-6666",
+      "qualifying_expenses": 5400
+    }
+  ],
+  "dependent_care_benefits": 0,
+  "agi": 120000
+}

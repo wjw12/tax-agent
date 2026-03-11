@@ -1,0 +1,42 @@
+{
+  "form_code": "1040-SR",
+  "tax_year": 2025,
+  "filing_status": "single",
+  "taxpayer": {
+    "first_name": "Morgan",
+    "last_name": "Senior",
+    "ssn": "333-33-3333",
+    "address": {
+      "line1": "42 Retirement Ln",
+      "city": "Phoenix",
+      "state": "AZ",
+      "postal_code": "85001"
+    },
+    "date_of_birth": "1950-05-10"
+  },
+  "dependents": [],
+  "digital_assets": false,
+  "wages": 18000,
+  "taxable_interest": 1200,
+  "ordinary_dividends": 300,
+  "qualified_dividends": 150,
+  "ira_distributions": 20000,
+  "taxable_ira_distributions": 18000,
+  "pension_annuity_income": 15000,
+  "taxable_pension_annuity_income": 15000,
+  "social_security_benefits": 22000,
+  "taxable_social_security_benefits": 12000,
+  "capital_gain_or_loss": 0,
+  "schedule_1_additional_income": 0,
+  "schedule_1_adjustments": 0,
+  "itemized_deductions": 12000,
+  "standard_deduction": 15750,
+  "qbi_deduction": 0,
+  "tax_before_credits": 5800,
+  "nonrefundable_credits": 0,
+  "other_taxes": 0,
+  "federal_withholding": 6200,
+  "estimated_tax_payments": 0,
+  "refundable_credits": 0,
+  "amount_applied_from_prior_year": 0
+}

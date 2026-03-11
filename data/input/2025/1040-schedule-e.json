@@ -1,0 +1,30 @@
+{
+  "form_code": "1040-Schedule-E",
+  "tax_year": 2025,
+  "rental_activities": [
+    {
+      "property_name": "123 Rental Ave",
+      "income_items": [
+        {
+          "description": "Gross rents",
+          "amount": 24000
+        }
+      ],
+      "expense_items": [
+        {
+          "description": "Repairs",
+          "amount": 1200
+        },
+        {
+          "description": "Insurance",
+          "amount": 900
+        },
+        {
+          "description": "Property taxes",
+          "amount": 2600
+        }
+      ],
+      "depreciation": 5000
+    }
+  ]
+}

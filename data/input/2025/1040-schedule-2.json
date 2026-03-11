@@ -1,0 +1,14 @@
+{
+  "form_code": "1040-Schedule-2",
+  "tax_year": 2025,
+  "additional_tax_items": [
+    {
+      "description": "Self-employment tax",
+      "amount": 1200
+    },
+    {
+      "description": "Additional tax on IRA",
+      "amount": 0
+    }
+  ]
+}

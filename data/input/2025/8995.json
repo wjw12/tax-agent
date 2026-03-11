@@ -1,0 +1,13 @@
+{
+  "form_code": "8995",
+  "tax_year": 2025,
+  "businesses": [
+    {
+      "business_name": "Example Consulting",
+      "qualified_business_income": 28000,
+      "reit_ptp_income": 0
+    }
+  ],
+  "taxable_income_before_qbi": 82000,
+  "net_capital_gains": 3200
+}

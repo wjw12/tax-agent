@@ -1,0 +1,23 @@
+{
+  "form_code": "1040-Schedule-EIC",
+  "tax_year": 2025,
+  "return_name": "Jordan Example",
+  "return_ssn": "111-22-3333",
+  "filing_status": "head_of_household",
+  "earned_income": 26500,
+  "agi": 25800,
+  "investment_income": 300,
+  "qualifying_children": [
+    {
+      "first_name": "Riley",
+      "last_name": "Example",
+      "ssn": "666-66-6666",
+      "relationship": "Child",
+      "date_of_birth": "2019-04-12",
+      "months_lived_with_taxpayer": 12,
+      "days_lived_with_taxpayer_in_us": 365,
+      "is_student": false,
+      "permanently_totally_disabled": false
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "form_code": "8862",
+  "tax_year": 2025,
+  "return_name": "Jordan Example",
+  "return_ssn": "111-22-3333",
+  "credit_type": "eic",
+  "credit_claims": [
+    "eic"
+  ],
+  "tax_year_of_disallowance": 2023,
+  "reason_disallowance_resolved": "Prior disallowance was caused by missing documentation and the qualifying child records are now complete.",
+  "part_ii_only_income_or_investment_income_issue": false,
+  "part_ii_taxpayer_or_spouse_can_be_claimed_as_qualifying_child": false,
+  "qualifying_children": [
+    {
+      "first_name": "Riley",
+      "last_name": "Example",
+      "ssn": "666-66-6666",
+      "relationship": "Child",
+      "date_of_birth": "2019-04-12",
+      "months_lived_with_taxpayer": 12,
+      "days_lived_with_taxpayer_in_us": 365,
+      "is_student": false,
+      "permanently_totally_disabled": false
+    }
+  ]
+}

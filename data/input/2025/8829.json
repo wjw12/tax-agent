@@ -1,0 +1,28 @@
+{
+  "form_code": "8829",
+  "tax_year": 2025,
+  "office_area_sqft": 180,
+  "home_area_sqft": 1200,
+  "direct_expenses": [
+    {
+      "description": "Office repainting",
+      "amount": 400
+    }
+  ],
+  "indirect_expenses": [
+    {
+      "description": "Rent",
+      "amount": 18000
+    },
+    {
+      "description": "Utilities",
+      "amount": 2400
+    },
+    {
+      "description": "Insurance",
+      "amount": 600
+    }
+  ],
+  "carryover_from_prior_year": 0,
+  "gross_income_limitation": 3500
+}

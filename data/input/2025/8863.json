@@ -1,0 +1,19 @@
+{
+  "form_code": "8863",
+  "tax_year": 2025,
+  "filing_status": "single",
+  "modified_agi": 68000,
+  "students": [
+    {
+      "student_name": "Jordan Example",
+      "student_ssn": "777-77-7777",
+      "institution_name": "State University",
+      "credit_type": "aotc",
+      "qualified_expenses": 4200,
+      "scholarships_and_grants": 500,
+      "months_enrolled_half_time": 8,
+      "completed_first_four_years": false,
+      "felony_drug_conviction": false
+    }
+  ]
+}

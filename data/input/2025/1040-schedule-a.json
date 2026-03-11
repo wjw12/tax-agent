@@ -1,0 +1,20 @@
+{
+  "form_code": "1040-Schedule-A",
+  "tax_year": 2025,
+  "agi": 126000,
+  "unreimbursed_medical_expenses": 12000,
+  "state_local_income_taxes": 8500,
+  "state_local_sales_taxes": 0,
+  "real_estate_taxes": 6200,
+  "personal_property_taxes": 300,
+  "other_taxes": 0,
+  "mortgage_interest": 9800,
+  "points_not_reported_on_form_1098": 0,
+  "mortgage_insurance_premiums": 0,
+  "investment_interest": 250,
+  "gifts_to_charity_cash": 1800,
+  "gifts_to_charity_other": 400,
+  "casualty_and_theft_losses": 0,
+  "other_itemized_deductions": 150,
+  "salt_cap": 10000
+}

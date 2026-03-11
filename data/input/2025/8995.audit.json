@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "form_code": "8995",
+  "tax_year": 2025,
+  "status": "accepted",
+  "sources": [
+    {
+      "output_key": "businesses[0].qualified_business_income",
+      "value": "28000",
+      "file": "sample-source.pdf",
+      "page": 1,
+      "locator": "Representative source reference for schema guidance",
+      "extractor": "sample",
+      "router_confidence": "high"
+    }
+  ],
+  "computations": [],
+  "issues": [],
+  "form_path": "data/input/2025/8995.json"
+}

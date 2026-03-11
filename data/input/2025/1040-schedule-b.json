@@ -1,0 +1,26 @@
+{
+  "form_code": "1040-Schedule-B",
+  "tax_year": 2025,
+  "interest_income": [
+    {
+      "payer": "Discover Bank",
+      "amount": 225
+    },
+    {
+      "payer": "TreasuryDirect",
+      "amount": 125
+    }
+  ],
+  "ordinary_dividends": [
+    {
+      "payer": "Fidelity",
+      "amount": 550
+    },
+    {
+      "payer": "Vanguard",
+      "amount": 350
+    }
+  ],
+  "foreign_accounts": false,
+  "foreign_trust": false
+}

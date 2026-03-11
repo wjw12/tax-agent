@@ -1,0 +1,166 @@
+{
+  "downloads": [
+    {
+      "form_code": "1040",
+      "form_name": "Form 1040 - U.S. Individual Income Tax Return",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040.pdf",
+      "filename": "f1040.pdf",
+      "bytes": "220237"
+    },
+    {
+      "form_code": "1040-SR",
+      "form_name": "Form 1040-SR - U.S. Tax Return for Seniors",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040s.pdf",
+      "filename": "f1040s.pdf",
+      "bytes": "233429"
+    },
+    {
+      "form_code": "1040-Schedule-1",
+      "form_name": "Schedule 1 (Form 1040) - Additional Income and Adjustments to Income",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040s1.pdf",
+      "filename": "f1040s1.pdf",
+      "bytes": "99940"
+    },
+    {
+      "form_code": "1040-Schedule-2",
+      "form_name": "Schedule 2 (Form 1040) - Additional Taxes",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040s2.pdf",
+      "filename": "f1040s2.pdf",
+      "bytes": "96526"
+    },
+    {
+      "form_code": "1040-Schedule-3",
+      "form_name": "Schedule 3 (Form 1040) - Additional Credits and Payments",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040s3.pdf",
+      "filename": "f1040s3.pdf",
+      "bytes": "69852"
+    },
+    {
+      "form_code": "1040-Schedule-A",
+      "form_name": "Schedule A (Form 1040) - Itemized Deductions",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040sa.pdf",
+      "filename": "f1040sa.pdf",
+      "bytes": "79008"
+    },
+    {
+      "form_code": "1040-Schedule-B",
+      "form_name": "Schedule B (Form 1040) - Interest and Ordinary Dividends",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040sb.pdf",
+      "filename": "f1040sb.pdf",
+      "bytes": "76411"
+    },
+    {
+      "form_code": "1040-Schedule-D",
+      "form_name": "Schedule D (Form 1040) - Capital Gains and Losses",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040sd.pdf",
+      "filename": "f1040sd.pdf",
+      "bytes": "97968"
+    },
+    {
+      "form_code": "8949",
+      "form_name": "Form 8949 - Sales and Other Dispositions of Capital Assets",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f8949.pdf",
+      "filename": "f8949.pdf",
+      "bytes": "128770"
+    },
+    {
+      "form_code": "1040-Schedule-C",
+      "form_name": "Schedule C (Form 1040) - Profit or Loss From Business",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040sc.pdf",
+      "filename": "f1040sc.pdf",
+      "bytes": "122589"
+    },
+    {
+      "form_code": "1040-Schedule-SE",
+      "form_name": "Schedule SE (Form 1040) - Self-Employment Tax",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040sse.pdf",
+      "filename": "f1040sse.pdf",
+      "bytes": "80290"
+    },
+    {
+      "form_code": "4562",
+      "form_name": "Form 4562 - Depreciation and Amortization",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f4562.pdf",
+      "filename": "f4562.pdf",
+      "bytes": "206401"
+    },
+    {
+      "form_code": "8829",
+      "form_name": "Form 8829 - Expenses for Business Use of Your Home",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f8829.pdf",
+      "filename": "f8829.pdf",
+      "bytes": "82821"
+    },
+    {
+      "form_code": "8995",
+      "form_name": "Form 8995 - Qualified Business Income Deduction Simplified Computation",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f8995.pdf",
+      "filename": "f8995.pdf",
+      "bytes": "72273"
+    },
+    {
+      "form_code": "8995-A",
+      "form_name": "Form 8995-A - Qualified Business Income Deduction",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f8995a.pdf",
+      "filename": "f8995a.pdf",
+      "bytes": "117129"
+    },
+    {
+      "form_code": "1040-Schedule-E",
+      "form_name": "Schedule E (Form 1040) - Supplemental Income and Loss",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040se.pdf",
+      "filename": "f1040se.pdf",
+      "bytes": "148367"
+    },
+    {
+      "form_code": "1040-Schedule-8812",
+      "form_name": "Schedule 8812 (Form 1040) - Credits for Qualifying Children and Other Dependents",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040s8.pdf",
+      "filename": "f1040s8.pdf",
+      "bytes": "100829"
+    },
+    {
+      "form_code": "1040-Schedule-EIC",
+      "form_name": "Schedule EIC (Form 1040) - Earned Income Credit",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040sei.pdf",
+      "filename": "f1040sei.pdf",
+      "bytes": "112439"
+    },
+    {
+      "form_code": "2441",
+      "form_name": "Form 2441 - Child and Dependent Care Expenses",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f2441.pdf",
+      "filename": "f2441.pdf",
+      "bytes": "121040"
+    },
+    {
+      "form_code": "8863",
+      "form_name": "Form 8863 - Education Credits",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f8863.pdf",
+      "filename": "f8863.pdf",
+      "bytes": "111888"
+    },
+    {
+      "form_code": "8889",
+      "form_name": "Form 8889 - Health Savings Accounts (HSAs)",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f8889.pdf",
+      "filename": "f8889.pdf",
+      "bytes": "74277"
+    },
+    {
+      "form_code": "8962",
+      "form_name": "Form 8962 - Premium Tax Credit",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f8962.pdf",
+      "filename": "f8962.pdf",
+      "bytes": "117715"
+    },
+    {
+      "form_code": "8862",
+      "form_name": "Form 8862 - Information To Claim Certain Credits After Disallowance",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f8862.pdf",
+      "filename": "f8862.pdf",
+      "bytes": "153254"
+    }
+  ],
+  "failures": []
+}

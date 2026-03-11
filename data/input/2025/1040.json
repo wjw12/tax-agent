@@ -1,0 +1,52 @@
+{
+  "form_code": "1040",
+  "tax_year": 2025,
+  "filing_status": "married_filing_jointly",
+  "taxpayer": {
+    "first_name": "Alex",
+    "last_name": "Example",
+    "ssn": "111-11-1111",
+    "address": {
+      "line1": "100 Main St",
+      "city": "Seattle",
+      "state": "WA",
+      "postal_code": "98101"
+    }
+  },
+  "spouse": {
+    "first_name": "Jamie",
+    "last_name": "Example",
+    "ssn": "222-22-2222",
+    "address": {
+      "line1": "100 Main St",
+      "city": "Seattle",
+      "state": "WA",
+      "postal_code": "98101"
+    }
+  },
+  "dependents": [],
+  "digital_assets": true,
+  "wages": 125000,
+  "taxable_interest": 450,
+  "ordinary_dividends": 900,
+  "qualified_dividends": 600,
+  "ira_distributions": 0,
+  "taxable_ira_distributions": 0,
+  "pension_annuity_income": 0,
+  "taxable_pension_annuity_income": 0,
+  "social_security_benefits": 0,
+  "taxable_social_security_benefits": 0,
+  "capital_gain_or_loss": 3200,
+  "schedule_1_additional_income": 1500,
+  "schedule_1_adjustments": 850,
+  "itemized_deductions": 18000,
+  "standard_deduction": 30000,
+  "qbi_deduction": 1200,
+  "tax_before_credits": 14500,
+  "nonrefundable_credits": 500,
+  "other_taxes": 300,
+  "federal_withholding": 16000,
+  "estimated_tax_payments": 0,
+  "refundable_credits": 0,
+  "amount_applied_from_prior_year": 0
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "form_code": "2441",
+  "tax_year": 2025,
+  "status": "accepted",
+  "sources": [
+    {
+      "output_key": "taxpayer_earned_income",
+      "value": "72000",
+      "file": "sample-source.pdf",
+      "page": 1,
+      "locator": "Representative source reference for schema guidance",
+      "extractor": "sample",
+      "router_confidence": "high"
+    }
+  ],
+  "computations": [],
+  "issues": [],
+  "form_path": "data/input/2025/2441.json"
+}

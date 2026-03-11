@@ -1,0 +1,22 @@
+{
+  "form_code": "1040-Schedule-D",
+  "tax_year": 2025,
+  "short_term_totals": [
+    {
+      "description": "Broker short-term covered transactions",
+      "amount": 1200
+    },
+    {
+      "description": "Crypto short-term transactions",
+      "amount": -250
+    }
+  ],
+  "long_term_totals": [
+    {
+      "description": "Broker long-term covered transactions",
+      "amount": 5400
+    }
+  ],
+  "short_term_carryover": -300,
+  "long_term_carryover": 0
+}

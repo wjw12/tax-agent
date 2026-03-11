@@ -1,0 +1,39 @@
+.DS_Store
+
+# Local environment and tools
+.env
+.env.*
+!.env.example
+.venv/
+.codex/
+
+# Python cache and tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local logs and scratch
+*.log
+tmp/
+
+# Generated OCR and extraction outputs
+/extracted_raw.json
+/ocr_extracted.json
+/ocr_comparison.json
+/mistral_ocr_results.json
+/ocr_diff_report.txt
+
+# Runtime workspace artifacts
+/workspace/cases/
+/workspace/verified-filled-forms/
+/workspace/*.json
+
+# Ad hoc local test corpus
+/new-tests/
+
+# Local lockfile without project metadata
+/uv.lock
