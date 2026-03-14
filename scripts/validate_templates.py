@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
-from .input_loader import load_all_sample_inputs
-from .registry import validate_manifest_coverage
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.input_loader import load_all_sample_inputs
+from src.registry import validate_manifest_coverage
 
 
 def main() -> int:
-    base_dir = Path(__file__).resolve().parent.parent
-    manifest_path = base_dir / "2025-empty-forms" / "download_manifest.json"
+    manifest_path = ROOT / "2025-empty-forms" / "download_manifest.json"
     coverage = validate_manifest_coverage(manifest_path)
     loaded = load_all_sample_inputs()
     report = {

@@ -139,8 +139,8 @@ Local helper script:
 
 ```bash
 uv run /home/appuser/tax/mistral_ocr.py \
-  --input-dir /home/appuser/tax/new-tests \
-  --output-dir /home/appuser/tax/new-tests \
+  --input-dir /home/appuser/tax/workspace/cases/case-001/sessions/session-001/source-pdfs \
+  --output-dir /home/appuser/tax/workspace/cases/case-001/source-sets/source-set-001/extraction \
   --no-compare
 ```
 

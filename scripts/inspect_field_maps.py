@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 def main() -> int:
-    root = Path(__file__).resolve().parent / "field_maps"
+    root = Path(__file__).resolve().parent.parent / "src" / "field_maps"
     for path in sorted(root.glob("*.json")):
         payload = json.loads(path.read_text(encoding="utf-8"))
         unmapped = payload.get("unmapped_keys", [])

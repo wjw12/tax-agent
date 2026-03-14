@@ -3,18 +3,23 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 from pypdf import PdfReader
 from pypdf.generic import NameObject
 
-from .input_loader import load_all_sample_inputs
-from .pdf_fillers import write_filled_pdf
-from .pdf_mapping import BASE_DIR, build_pdf_field_mapping, write_field_map_snapshot
-from .registry import FORM_DEFINITIONS, build_field_values
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.input_loader import load_all_sample_inputs
+from src.pdf_fillers import write_filled_pdf
+from src.pdf_mapping import BASE_DIR, build_pdf_field_mapping, write_field_map_snapshot
+from src.registry import FORM_DEFINITIONS, build_field_values
 
 
-OUTPUT_DIR = BASE_DIR / "workspace" / "verified-filled-forms"
+OUTPUT_DIR = BASE_DIR / "tmp" / "verified-filled-forms"
 
 
 def _set_checkbox_values(pdf_path: Path, checkbox_fields: dict[str, tuple[str, str]]) -> None:

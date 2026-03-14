@@ -1,400 +1,172 @@
-# Tax Agent Handoff For API Server Integration
+# Tax Agent / Tax Server Boundary
 
 ## Purpose
 
-This document explains the system boundary between the API server and the tax
-agent workspace in this repository.
+This document describes the current system boundary between:
 
-The intended audience is the developer operating the API server and worker
-daemons. The goal is to make ownership, inputs, outputs, and failure semantics
-unambiguous so the API layer can treat the tax agent as a clean execution
-backend rather than a conversational black box.
+- `tax-agent`
+  - this repository
+  - a clean source package the customer runs locally with Codex or another
+    compatible local agent
+- `tax-server`
+  - an authenticated backend API for PDF upload, OCR, and extraction storage
 
-This document is intentionally about procedure and integration boundaries. It
-does not restate generic tax knowledge.
-
----
+This replaces the older worker-orchestration model. There is no longer a remote
+tax-agent worker daemon that performs end-to-end filing work on behalf of the
+user.
 
 ## One-Sentence Model
 
-The API server is the system of record; the tax agent worker is a bounded job
-executor that reads a case package, produces tax artifacts plus summarized
-status, persists durable case artifacts, and then discards raw PDFs and scratch
-workspace state when the active session or job ends.
+`tax-agent` does the tax reasoning and PDF filling locally. `tax-server`
+provides authenticated, synchronous PDF processing and returns raw extraction
+artifacts for the local agent to consume.
 
----
+## Current Product Shape
 
-## System Boundary
+The current customer experience is:
 
-### API server owns
+1. the user downloads a clean `tax-agent` repo locally
+2. the repo includes the blank 2025 tax forms and local agent instructions
+3. the user provides their own uploaded PDFs at runtime
+4. the local agent decides scope, asks questions, interprets facts, and fills
+   forms locally
+5. `tax-server`, when used, only helps with PDF processing and extraction
 
-- user auth, authorization, and case ownership
-- job creation, scheduling, cancellation, and retries
-- canonical job state in DB
-- browser-facing SSE and final user-visible status
-- upload orchestration to GCS and artifact metadata
-- durable retention policy
-- deciding when a user has explicitly approved proceeding despite non-critical
-  missing items
-- mapping a user action into a worker job request
+This repo should therefore ship:
 
-### Worker daemon owns
+- prompts and workflow docs
+- deterministic tax logic
+- empty 2025 forms
+- maintenance scripts for the team
 
-- creating a temp session or job workspace for raw PDFs and scratch files
-- downloading the case package from GCS
-- running local Codex and local ACP in that temp workspace
-- local coordination among extractor, auditor, reconciler, deduction reviewer,
-  and PDF filler when needed
-- emitting sanitized progress callbacks
-- uploading durable outputs to GCS
-- deleting temp files in `finally`
+This repo should not ship:
 
-### Tax agent code in this repo owns
+- uploaded taxpayer PDFs
+- sample source-form uploads
+- generated OCR output
+- live case workspaces
 
+## Ownership Boundary
+
+### `tax-agent` owns
+
+- customer-facing intake and scope decisions
 - supported-form schemas and validation in [src/models.py](/home/appuser/tax/src/models.py)
 - audit sidecar schema in [src/audit_models.py](/home/appuser/tax/src/audit_models.py)
 - supported form registry in [src/registry.py](/home/appuser/tax/src/registry.py)
-- extraction, audit, reconciliation, deduction-review, and PDF-filling
-  procedure docs in [AGENTS.md](/home/appuser/tax/AGENTS.md) and
-  [workspace/](/home/appuser/tax/workspace)
-- deterministic PDF field building and verification
+- extraction-routing instructions in [workspace/PDF_ROUTING.md](/home/appuser/tax/workspace/PDF_ROUTING.md)
+- audit methodology in [workspace/TAX_AUDIT_METHODOLOGY.md](/home/appuser/tax/workspace/TAX_AUDIT_METHODOLOGY.md)
+- deterministic PDF field building and local PDF filling
+- local artifact layout under `workspace/cases/<case-id>/...` when the user is
+  working on a return
 
-### Explicit non-goals for the tax agent worker
+### `tax-server` owns
 
-- it is not the source of truth for job state
-- it is not the source of truth for long-term case storage
-- it should not expose raw ACP transcripts as durable product output
-- it should not talk directly to browsers
-- it should not invent tax facts to fill missing data
-- it should not silently treat a review-pending case as filing-ready
+- API key validation and usage tracking
+- PDF upload ingress
+- synchronous page routing and extraction
+- OCR and optional model fallback
+- ephemeral storage lifecycle for uploads
+- GCS storage for uploaded PDFs and extraction result JSON
 
----
+### `tax-server` does not own
 
-## Execution Model
+- tax reasoning
+- supported-vs-unsupported filing decisions
+- taxpayer interviews
+- return completeness decisions
+- final tax positions
+- local PDF filling
 
-For v1, one submitted API job should map to one worker run.
+## Current `tax-server` API Surface
 
-Inside that worker run, the tax agent may use local sub-agents, but that is an
-internal implementation detail. The API server should treat the worker as a
-single execution unit with one overall status and one output manifest.
+Based on [tax-server/README.md](/home/appuser/tax-server/README.md) and
+[docs/local-agent-backend-design.md](/home/appuser/tax-server/docs/local-agent-backend-design.md),
+the current backend routes are:
 
-The recommended internal execution order is:
+- `GET /health`
+- `POST /v1/auth/inspect`
+- `POST /v1/pdf/process`
 
-1. intake and scope check from provided case facts and documents
-2. extraction from source PDFs into typed payload JSON plus audit sidecars
-3. deduction review when expense substantiation is materially relevant
-4. audit of source tracing, arithmetic, and supportability
-5. reconciliation across forms and source sets when multiple artifacts interact
-6. PDF filling only for accepted outputs, or draft output when explicitly allowed
+`POST /v1/pdf/process` is synchronous. It stores the uploaded PDF and the
+result JSON in GCS, returns inline page extraction data, and records usage.
 
-The worker may stop early if the case is unsupported or materially blocked.
+## Data Flow
 
----
+When `tax-agent` uses `tax-server`:
 
-## What The API Server Must Send In
+1. the local agent uploads a PDF to `POST /v1/pdf/process`
+2. `tax-server` validates the API key and processes the PDF
+3. `tax-server` returns:
+   - page results
+   - extraction metadata
+   - input/result object URIs
+4. `tax-agent` uses those extraction artifacts locally
+5. `tax-agent` continues taxpayer interaction, audit, reconciliation, and local
+   PDF filling
 
-The worker request should contain only what is needed to execute a single run.
+## Artifact Rules
 
-Minimum fields:
+Reference artifacts in this repo are limited to:
 
-- `job_id`
-- `case_id`
-- `job_type`
-- `input_urls`
-- `output_upload_prefix`
-- `callback_base_url`
+- `data/input/2025/`
+- `2025-empty-forms/`
 
-Recommended fields for this tax agent:
-
-- `instructions`
-  A short coordinator instruction, not a full transcript dump.
-- `case_facts_json`
-  Structured intake facts already known at the API layer.
-- `user_approvals_json`
-  Explicit approvals that matter to loop-avoidance and draft behavior.
-- `output_mode`
-  `final` or `draft`
-- `tax_year`
-- `requested_forms`
-  Optional. Useful when the API already knows the desired subset.
-
-### Important approval field
-
-To avoid repeated loops on non-critical missing items, the API layer should
-pass explicit user intent when available, for example:
-
-```json
-{
-  "proceed_without_noncritical_docs": true,
-  "allow_draft_if_review_pending": true
-}
-```
-
-The worker should treat this as permission to proceed conservatively. It should
-still mark the case `needs_review` or `blocked` when appropriate, but it should
-not keep re-asking for the same non-critical item.
-
----
-
-## What The Worker Must Materialize Locally
-
-The worker should create a fresh job directory, for example:
+Live user work belongs under:
 
 ```text
-/srv/codex/jobs/<job_id>/
-  repo/
-  workspace/cases/<case-id>/
-    active.json
-    sessions/<session-id>/
-      source-pdfs/
-    source-sets/<source-set-id>/
-      manifest.json
-      extraction/
-    data/input/<tax-year>/
-    audit/
-    filled-forms/<tax-year>/<run-id>/
+workspace/cases/<case-id>/
+  active.json
+  sessions/<session-id>/
+    source-pdfs/
+  source-sets/<source-set-id>/
+    extraction/
+  data/input/2025/
+  audit/
+  filled-forms/2025/<run-id>/
 ```
 
-Within the repo, the live case contract from [AGENTS.md](/home/appuser/tax/AGENTS.md)
-should be preserved:
+Important separation:
 
-- raw source PDFs under
-  `workspace/cases/<case-id>/sessions/<session-id>/source-pdfs/`
-- retained extraction JSON under
-  `workspace/cases/<case-id>/source-sets/<source-set-id>/extraction/`
-- extracted payloads under `workspace/cases/<case-id>/data/input/<tax-year>/`
-- audit reports under `workspace/cases/<case-id>/audit/`
-- filled PDFs under `workspace/cases/<case-id>/filled-forms/<tax-year>/<run-id>/`
+- `sessions/<session-id>/source-pdfs/` is ephemeral local working storage
+- uploaded source PDFs are user inputs, not repo fixtures
+- extracted JSON may be retained locally per case
+- blank forms in `2025-empty-forms/` are durable repo assets
 
-The worker must not overwrite reference inputs under `data/input/2025/` or
-blank forms under `2025-empty-forms/`.
+## Integration Contract For `tax-agent`
 
----
+If the local agent uses `tax-server`, it should send:
 
-## Durable Outputs The API Server Should Expect
+- an API key
+- the PDF file
+- a case identifier if needed by the backend contract
+- extractor preferences only when the API supports them
 
-The worker should upload only durable, user-meaningful artifacts plus machine
-readable manifests.
+It should expect back:
 
-### Primary durable outputs
+- a job or request identifier
+- page count
+- extraction results inline
+- GCS URIs for the stored input and stored result
+- usage summary
 
-- source-set manifests
-- retained extraction JSON
-- extracted form payload JSON files
-- matching `.audit.json` sidecars
-- audit report summaries
-- reconciliation findings, when run
-- deduction review findings, when run
-- filled PDFs, when produced
-- fill manifest and verification report
-- one top-level run manifest for the job
+It should not expect:
 
-### Ephemeral outputs that should stay local
+- tax conclusions
+- filled forms
+- filing readiness decisions
+- cross-form reconciliation
 
-- raw ACP session history
-- shell command logs
-- exploratory notes
-- OCR scratch files unless explicitly retained for debugging
-- temp copies of source documents after upload is complete
-- raw PDFs after the active session lease ends
+## Documentation Source Of Truth
 
----
+For backend behavior, use:
 
-## Output Contract
+- [tax-server/README.md](/home/appuser/tax-server/README.md)
+- [docs/local-agent-backend-design.md](/home/appuser/tax-server/docs/local-agent-backend-design.md)
 
-The API server should treat the worker result as a package with two layers:
+For local agent behavior in this repo, use:
 
-### 1. Artifact layer
-
-Files uploaded to GCS, including:
-
-- `workspace/cases/<case-id>/data/input/<tax-year>/<form>.json`
-- `workspace/cases/<case-id>/data/input/<tax-year>/<form>.audit.json`
-- `workspace/cases/<case-id>/audit/*.json` or `*.md`
-- `workspace/cases/<case-id>/filled-forms/<tax-year>/<run-id>/*`
-
-### 2. Summary layer
-
-A compact machine-readable completion payload, for example:
-
-```json
-{
-  "job_id": "job_123",
-  "case_id": "case_001",
-  "job_status": "done",
-  "return_status": "needs_review",
-  "output_mode": "draft",
-  "artifacts": {
-    "payloads": [".../1040.json", ".../8949.json"],
-    "audit_sidecars": [".../1040.audit.json", ".../8949.audit.json"],
-    "reports": [".../audit/summary.json"],
-    "filled_forms": [".../filled-forms/2025/run-1/1040.filled.pdf"]
-  },
-  "summary": {
-    "supported": true,
-    "critical_open_items": [],
-    "noncritical_open_items": [
-      "Broker supplemental allocation page not provided; draft proceeds with limitation recorded."
-    ],
-    "next_handoff": "user_review"
-  }
-}
-```
-
-The API server should persist this summary in DB and use it to drive user
-presentation. It should not parse raw transcripts to infer outcome.
-
----
-
-## Status Semantics
-
-There are two related but different status layers:
-
-### Job status
-
-Owned by the API server:
-
-- `queued`
-- `running`
-- `done`
-- `failed`
-- `cancelled`
-
-### Tax-return readiness status
-
-Returned by the worker:
-
-- `accepted`
-- `needs_review`
-- `blocked`
-
-Interpretation:
-
-- `accepted`
-  The relevant artifacts are sufficiently supported for normal downstream use.
-- `needs_review`
-  The run completed, but open items remain. This can still produce a useful
-  draft if the API/user requested draft behavior.
-- `blocked`
-  The worker found a material source, arithmetic, or supportability problem.
-
-Important:
-
-- a job can be `done` while the return status is `needs_review`
-- a job can be `done` while some forms are produced only as draft
-- only `accepted` should be treated as filing-ready by default
-
----
-
-## Missing Information And User Greenlight
-
-This repo is intentionally designed to avoid getting trapped in loops.
-
-The API server is the right place to capture the user's explicit decision about
-whether to proceed without non-critical items. The worker then uses that
-decision during execution.
-
-Recommended rule:
-
-- if a missing item is critical, return `blocked` or at least `needs_review`
-  and explain why
-- if a missing item is non-critical and the user already approved proceeding,
-  continue the run, record the limitation, and keep status conservative
-
-This separation matters:
-
-- the API server owns user consent and persistence of that consent
-- the worker owns conservative execution once that consent is provided
-
----
-
-## Progress Event Contract
-
-Progress events should be sanitized and high signal. Good event types:
-
-- `assigned`
-- `started`
-- `progress`
-- `artifact`
-- `done`
-- `failed`
-- `cancelled`
-
-Good `progress.message` examples:
-
-- `Downloaded 6 source documents`
-- `Extracted payloads for 1040, Schedule B, Schedule D, and 8949`
-- `Audit found 1 critical issue: missing basis support for digital asset dispositions`
-- `Generated draft filled PDFs for accepted forms`
-
-Avoid sending:
-
-- raw OCR text
-- long stack traces except in internal debug paths
-- raw ACP transcript content
-- taxpayer document contents in logs unless strictly needed
-
----
-
-## Recommended API/Worker Contract For This Repo
-
-### Request to worker
-
-```json
-{
-  "job_id": "job_123",
-  "case_id": "case_001",
-  "job_type": "tax_run",
-  "tax_year": 2025,
-  "instructions": "Run the tax workflow for this case and return summarized findings plus durable artifacts.",
-  "case_facts_json": {},
-  "user_approvals_json": {
-    "proceed_without_noncritical_docs": true,
-    "allow_draft_if_review_pending": true
-  },
-  "output_mode": "draft",
-  "input_urls": [
-    "https://signed-gcs-url/source-1.pdf",
-    "https://signed-gcs-url/source-2.pdf"
-  ],
-  "output_upload_prefix": "gs://bucket/jobs/job_123/",
-  "callback_base_url": "https://api.internal"
-}
-```
-
-### Completion callback from worker
-
-```json
-{
-  "job_id": "job_123",
-  "worker_id": "worker-a",
-  "job_status": "done",
-  "return_status": "needs_review",
-  "output_mode": "draft",
-  "manifest_url": "gs://bucket/jobs/job_123/run-manifest.json",
-  "summary": {
-    "supported": true,
-    "critical_open_items": [],
-    "noncritical_open_items": [
-      "One nonessential support document was not provided; limitation recorded."
-    ],
-    "next_handoff": "user_review"
-  }
-}
-```
-
----
-
-## Practical Integration Rules
-
-- Treat this repo as an execution engine, not as the source of durable truth.
-- Persist structured manifests and summarized findings, not raw session logs.
-- Pass explicit user approvals into the run request when they affect draft
-  behavior or loop-avoidance.
-- Keep one worker run scoped to one job in v1.
-- Let the worker decide internal sub-agent usage locally.
-- Use GCS as the only shared file layer between API and workers.
-
-If these boundaries are kept clean, the API server can evolve independently
-from the tax agent internals, and the tax worker can become more capable
-without changing the browser contract.
+- [AGENTS.md](/home/appuser/tax/AGENTS.md)
+- [workspace/PDF_ROUTING.md](/home/appuser/tax/workspace/PDF_ROUTING.md)
+- [workspace/TAX_AUDIT_METHODOLOGY.md](/home/appuser/tax/workspace/TAX_AUDIT_METHODOLOGY.md)
+- [workspace/PDF_FILLING.md](/home/appuser/tax/workspace/PDF_FILLING.md)
