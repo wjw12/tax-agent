@@ -1,0 +1,48 @@
+{
+  "pdf_filename": "f1040nra.pdf",
+  "mapped_text_fields": {
+    "f1_1[0]": "Aarav Patel",
+    "f1_2[0]": "900700001",
+    "f1_10[0]": "",
+    "f1_3[0]": "1800",
+    "f1_4[0]": "1800",
+    "f1_5[0]": "300",
+    "f1_6[0]": "150",
+    "f1_7[0]": "0",
+    "f1_8[0]": "450",
+    "f1_9[0]": "0",
+    "f1_11[0]": "0",
+    "f1_12[0]": "2250"
+  },
+  "mapped_checkbox_fields": {},
+  "unmapped_keys": [],
+  "ignored_keys": [
+    "meta_other_itemized_deduction_description"
+  ],
+  "line_field_map": {
+    "Ln4": "f1_7[0]",
+    "Ln5": "f1_8[0]",
+    "Ln6": "f1_9[0]",
+    "Ln7": "f1_11[0]",
+    "Ln8": "f1_12[0]"
+  },
+  "available_fields": [
+    "form1040-NR[0]",
+    "form1040-NR[0].Page1[0]",
+    "form1040-NR[0].Page1[0].Line1a_ReadOrder[0]",
+    "form1040-NR[0].Page1[0].Line1a_ReadOrder[0].f1_3[0]",
+    "form1040-NR[0].Page1[0].Line2_ReadOrder[0]",
+    "form1040-NR[0].Page1[0].Line2_ReadOrder[0].f1_5[0]",
+    "form1040-NR[0].Page1[0].Line7Entry[0]",
+    "form1040-NR[0].Page1[0].Line7Entry[0].f1_10[0]",
+    "form1040-NR[0].Page1[0].f1_11[0]",
+    "form1040-NR[0].Page1[0].f1_12[0]",
+    "form1040-NR[0].Page1[0].f1_1[0]",
+    "form1040-NR[0].Page1[0].f1_2[0]",
+    "form1040-NR[0].Page1[0].f1_4[0]",
+    "form1040-NR[0].Page1[0].f1_6[0]",
+    "form1040-NR[0].Page1[0].f1_7[0]",
+    "form1040-NR[0].Page1[0].f1_8[0]",
+    "form1040-NR[0].Page1[0].f1_9[0]"
+  ]
+}

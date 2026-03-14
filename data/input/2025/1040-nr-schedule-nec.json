@@ -1,0 +1,18 @@
+{
+  "form_code": "1040-NR-Schedule-NEC",
+  "tax_year": 2025,
+  "return_name": "Aarav Patel",
+  "return_identifying_number": "900-70-0001",
+  "other_rate_percent": 0,
+  "income_rows": [
+    {
+      "category": "dividends_us_corp",
+      "amount_at_10_percent": 0,
+      "amount_at_15_percent": 0,
+      "amount_at_30_percent": 400,
+      "amount_at_other_rate": 0
+    }
+  ],
+  "capital_transactions": [],
+  "capital_gain_rate_class": "30"
+}

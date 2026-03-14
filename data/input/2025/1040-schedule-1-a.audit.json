@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "form_code": "1040-Schedule-1-A",
+  "tax_year": 2025,
+  "status": "accepted",
+  "sources": [
+    {
+      "output_key": "modified_agi_base",
+      "value": "27725",
+      "file": "sample-nonresident-source.pdf",
+      "page": 1,
+      "locator": "Representative Schedule 1-A source reference for schema guidance",
+      "extractor": "sample",
+      "router_confidence": "high"
+    }
+  ],
+  "computations": [],
+  "issues": [],
+  "form_path": "data/input/2025/1040-schedule-1-a.json"
+}

@@ -1,0 +1,36 @@
+{
+  "form_code": "1040-NR-Schedule-OI",
+  "tax_year": 2025,
+  "return_name": "Aarav Patel",
+  "return_identifying_number": "900-70-0001",
+  "citizenship_countries": "India",
+  "tax_residence_country": "India",
+  "visa_type": "F-1",
+  "applied_for_green_card": false,
+  "was_us_citizen": false,
+  "was_green_card_holder": false,
+  "changed_visa_status": false,
+  "visa_status_change_details": "",
+  "entry_departure_dates": [
+    {
+      "date_entered": "2025-01-09",
+      "date_departed": "2025-12-20"
+    }
+  ],
+  "commuter_from_canada": false,
+  "commuter_from_mexico": false,
+  "days_in_us_2023": 0,
+  "days_in_us_2024": 145,
+  "days_in_us_2025": 346,
+  "previously_filed_us_return": true,
+  "prior_filing_year_and_form": "2024 Form 1040-NR",
+  "filing_for_trust": false,
+  "trust_had_us_or_foreign_owner_or_distribution": false,
+  "received_total_compensation_over_250k": false,
+  "used_alternative_compensation_sourcing_method": false,
+  "treaty_claims": [],
+  "taxed_on_treaty_exempt_income_in_foreign_country": false,
+  "claiming_competent_authority_benefits": false,
+  "real_property_election_first_year": false,
+  "real_property_election_continuing": false
+}

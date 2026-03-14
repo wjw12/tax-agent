@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "form_code": "1040-NR",
+  "tax_year": 2025,
+  "status": "accepted",
+  "sources": [
+    {
+      "output_key": "wages",
+      "value": "28000",
+      "file": "sample-nonresident-source.pdf",
+      "page": 1,
+      "locator": "Representative 1040-NR source reference for schema guidance",
+      "extractor": "sample",
+      "router_confidence": "high"
+    }
+  ],
+  "computations": [],
+  "issues": [],
+  "form_path": "data/input/2025/1040-nr.json"
+}

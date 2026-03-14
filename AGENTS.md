@@ -36,6 +36,11 @@ If the case includes Form 1099-DA or digital asset dispositions, load
 [FORM_1099_DA.md](/home/appuser/tax/workspace/FORM_1099_DA.md) before asking
 follow-up questions or making supportability decisions about those items.
 
+If the taxpayer may need Form 1040-NR, or if U.S. tax residency for 2025 is
+unclear, load [FORM_1040_NR.md](/home/appuser/tax/workspace/FORM_1040_NR.md)
+before deciding supportability or asking document-specific nonresident
+questions.
+
 ## Scope
 
 The system supports relatively straightforward individual returns, including:
@@ -49,7 +54,8 @@ The system supports relatively straightforward individual returns, including:
 - NFT activity and other digital asset dispositions when records are available
 - Schedule C self-employment / freelancer income
 - basic Schedule E rental real estate
-- federal filing
+- federal Form 1040 filing
+- straightforward federal Form 1040-NR filing for individuals
 - supported state filing
 
 The system does not support:
@@ -61,6 +67,13 @@ The system does not support:
 - any business with employees or payroll obligations
 - foreign businesses
 - foreign reporting such as FBAR/FATCA
+- dual-status alien returns
+- first-year choice elections
+- resident election cases involving a nonresident spouse
+- treaty-based return positions that require specialized disclosure or analysis,
+  including Form 8833 support
+- foreign partnership transfer cases that require Schedule P (Form 1040-NR)
+- estate or trust Form 1040-NR filings
 - advanced investment elections or advanced derivatives
 - real estate professional status, cost segregation, 1031 exchanges, or other advanced rental treatment
 - unsupported states or major multi-state complexity
@@ -84,6 +97,48 @@ When speaking to taxpayers:
 - if digital asset cost basis is missing or unclear, ask the taxpayer for their
   basis records, transaction history, or gain/loss report instead of assuming
   basis or assuming the case is unsupported immediately
+
+## Required Intake Flow
+
+Do not start with document extraction. First determine the filing path.
+
+For every new 2025 case, collect these facts before moving deeper:
+
+1. 2025 U.S. tax residency status:
+   U.S. citizen, resident alien, nonresident alien, dual-status, or unsure
+2. Filing status:
+   single, married, head of household, qualifying surviving spouse, or unsure
+3. Taxpayer identifying number status:
+   SSN, ITIN, neither yet issued, or unsure
+4. State footprint:
+   current state of residence, any move during 2025, and any other state-source income
+5. Core document set:
+   W-2, 1099 series, 1042-S, 1098, K-1, brokerage gain/loss reports, and business/rental records as applicable
+
+Use the answers to branch immediately:
+
+- If the taxpayer is a U.S. citizen or resident alien for 2025, continue on the
+  Form 1040 path.
+- If the taxpayer is a nonresident alien for 2025, continue on the Form 1040-NR
+  path and load [FORM_1040_NR.md](/home/appuser/tax/workspace/FORM_1040_NR.md).
+- If the taxpayer is dual-status, is considering a resident election, or cannot
+  explain their residency facts well enough to determine the correct path,
+  treat the case as unsupported until clarified.
+
+When the taxpayer is married, always establish:
+
+- whether the spouse had any U.S. tax residency during 2025
+- whether the taxpayer wants or needs a joint-style resident election
+- whether the spouse has an SSN or ITIN
+
+When the taxpayer may need state filing, establish before extraction:
+
+- full-year resident state, part-year move states, and move dates
+- states where wages, self-employment income, or rental income were sourced
+- whether withholding appears on W-2s, K-1s, or composite state statements
+
+Only after the filing path is clear should you gather more detailed line-item
+facts and route source PDFs for extraction.
 
 ## Coordinator Rules
 

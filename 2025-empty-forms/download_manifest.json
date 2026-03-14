@@ -8,6 +8,34 @@
       "bytes": "220237"
     },
     {
+      "form_code": "1040-NR",
+      "form_name": "Form 1040-NR - U.S. Nonresident Alien Income Tax Return",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040nr.pdf",
+      "filename": "f1040nr.pdf",
+      "bytes": "177160"
+    },
+    {
+      "form_code": "1040-NR-Schedule-OI",
+      "form_name": "Schedule OI (Form 1040-NR) - Other Information",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040nro.pdf",
+      "filename": "f1040nro.pdf",
+      "bytes": "93756"
+    },
+    {
+      "form_code": "1040-NR-Schedule-A",
+      "form_name": "Schedule A (Form 1040-NR) - Itemized Deductions",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040nra.pdf",
+      "filename": "f1040nra.pdf",
+      "bytes": "59129"
+    },
+    {
+      "form_code": "1040-NR-Schedule-NEC",
+      "form_name": "Schedule NEC (Form 1040-NR) - Tax on Income Not Effectively Connected With a U.S. Trade or Business",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040nrn.pdf",
+      "filename": "f1040nrn.pdf",
+      "bytes": "96271"
+    },
+    {
       "form_code": "1040-SR",
       "form_name": "Form 1040-SR - U.S. Tax Return for Seniors",
       "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040s.pdf",
@@ -20,6 +48,13 @@
       "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040s1.pdf",
       "filename": "f1040s1.pdf",
       "bytes": "99940"
+    },
+    {
+      "form_code": "1040-Schedule-1-A",
+      "form_name": "Schedule 1-A (Form 1040) - Additional Deductions",
+      "irs_url": "https://www.irs.gov/pub/irs-pdf/f1040s1a.pdf",
+      "filename": "f1040s1a.pdf",
+      "bytes": "94224"
     },
     {
       "form_code": "1040-Schedule-2",

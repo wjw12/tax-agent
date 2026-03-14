@@ -170,3 +170,13 @@ For local agent behavior in this repo, use:
 - [workspace/PDF_ROUTING.md](/home/appuser/tax/workspace/PDF_ROUTING.md)
 - [workspace/TAX_AUDIT_METHODOLOGY.md](/home/appuser/tax/workspace/TAX_AUDIT_METHODOLOGY.md)
 - [workspace/PDF_FILLING.md](/home/appuser/tax/workspace/PDF_FILLING.md)
+
+## Local Client Config
+
+This repo's shared client config lives in [src/tax_server_client.py](/home/appuser/tax/src/tax_server_client.py).
+
+Current defaults:
+
+- `DEFAULT_TAX_SERVER_BASE_URL = "http://34.10.4.155:8010"`
+- `TAX_SERVER_BASE_URL` may override that default from the environment
+- `TAX_SERVER_API_KEY` is read from the environment for authenticated routes

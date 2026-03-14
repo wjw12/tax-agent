@@ -10,7 +10,12 @@ from pypdf.generic import BooleanObject, NameObject, TextStringObject
 from .core import FormComputation, digits_only, format_irs_dollar
 from .models import (
     Form1040Input,
+    Form1040NRScheduleAInput,
+    Form1040NRScheduleNECInput,
+    Form1040NRScheduleOIInput,
+    Form1040NRInput,
     Form1040SRInput,
+    Schedule1AInput,
     Form2441Input,
     Form4562Input,
     Form8862Input,
@@ -35,6 +40,10 @@ from .models import (
 )
 from .processors import (
     process_1040,
+    process_1040_nr_schedule_a,
+    process_1040_nr_schedule_nec,
+    process_1040_nr_schedule_oi,
+    process_1040_nr,
     process_1040_sr,
     process_2441,
     process_4562,
@@ -47,6 +56,7 @@ from .processors import (
     process_8995_a,
     process_8812,
     process_8829,
+    process_schedule_1_a,
     process_schedule_1,
     process_schedule_2,
     process_schedule_3,
@@ -72,30 +82,66 @@ def _line_fields(form: FormComputation) -> dict[str, str]:
     return fields
 
 
+def _taxpayer_identifying_number(data: Form1040Input | Form1040SRInput | Form1040NRInput) -> str:
+    return digits_only(data.taxpayer.identifying_number or data.taxpayer.ssn)
+
+
 def _identity_fields(data: Form1040Input | Form1040SRInput) -> dict[str, str]:
     fields = {
         "taxpayer_first_name": data.taxpayer.first_name,
         "taxpayer_last_name": data.taxpayer.last_name,
-        "taxpayer_ssn": digits_only(data.taxpayer.ssn),
+        "taxpayer_ssn": _taxpayer_identifying_number(data),
         "taxpayer_address_line1": data.taxpayer.address.line1,
+        "taxpayer_address_line2": data.taxpayer.address.line2 or "",
         "taxpayer_city": data.taxpayer.address.city,
         "taxpayer_state": data.taxpayer.address.state,
         "taxpayer_postal_code": data.taxpayer.address.postal_code,
+        "taxpayer_foreign_country": data.taxpayer.address.country or "",
         "filing_status": data.filing_status,
+        "digital_assets": "yes" if data.digital_assets else "no",
     }
     if data.spouse:
         fields.update(
             {
                 "spouse_first_name": data.spouse.first_name,
                 "spouse_last_name": data.spouse.last_name,
-                "spouse_ssn": digits_only(data.spouse.ssn),
+                "spouse_ssn": digits_only(data.spouse.identifying_number or data.spouse.ssn),
             }
         )
     return fields
 
 
+def _identity_fields_1040_nr(data: Form1040NRInput) -> dict[str, str]:
+    fields = {
+        "taxpayer_first_name": data.taxpayer.first_name,
+        "taxpayer_last_name": data.taxpayer.last_name,
+        "taxpayer_ssn": _taxpayer_identifying_number(data),
+        "taxpayer_address_line1": data.taxpayer.address.line1,
+        "taxpayer_address_line2": data.taxpayer.address.line2 or "",
+        "taxpayer_city": data.taxpayer.address.city,
+        "taxpayer_state": data.taxpayer.address.state,
+        "taxpayer_postal_code": data.taxpayer.address.postal_code,
+        "taxpayer_foreign_country": data.taxpayer.address.country or "",
+        "taxpayer_foreign_province": data.taxpayer.address.state if data.taxpayer.address.country else "",
+        "taxpayer_foreign_postal_code": data.taxpayer.address.postal_code if data.taxpayer.address.country else "",
+        "filing_status": data.filing_status,
+        "digital_assets": "yes" if data.digital_assets else "no",
+        "qualifying_person_name": data.qualifying_person_name or "",
+    }
+    if data.taxpayer.address.country:
+        fields["taxpayer_state"] = ""
+        fields["taxpayer_postal_code"] = ""
+    return fields
+
+
 def _full_name(first_name: str, last_name: str) -> str:
     return " ".join(part for part in (first_name, last_name) if part).strip()
+
+
+def _mmddyyyy(value) -> str:
+    if value is None:
+        return ""
+    return value.strftime("%m/%d/%Y")
 
 
 def _mmdd_parts(value) -> tuple[str, str]:
@@ -140,6 +186,183 @@ def fill_1040_fields(data: Form1040Input) -> dict[str, str]:
 
 def fill_1040_sr_fields(data: Form1040SRInput) -> dict[str, str]:
     return {**_identity_fields(data), **_line_fields(process_1040_sr(data))}
+
+
+def fill_1040_nr_fields(data: Form1040NRInput) -> dict[str, str]:
+    return {**_identity_fields_1040_nr(data), **_line_fields(process_1040_nr(data))}
+
+
+def fill_1040_nr_schedule_oi_fields(data: Form1040NRScheduleOIInput) -> dict[str, str]:
+    form = process_1040_nr_schedule_oi(data)
+    fields = {
+        "return_name": data.return_name,
+        "return_identifying_number": digits_only(data.return_identifying_number),
+        "citizenship_countries": data.citizenship_countries,
+        "tax_residence_country": data.tax_residence_country,
+        "visa_type": data.visa_type,
+        "visa_status_change_details": data.visa_status_change_details,
+        "days_in_us_2023": str(data.days_in_us_2023),
+        "days_in_us_2024": str(data.days_in_us_2024),
+        "days_in_us_2025": str(data.days_in_us_2025),
+        "prior_filing_year_and_form": data.prior_filing_year_and_form,
+        "treaty_total_exempt_income": format_irs_dollar(form.get_line("l1e")),
+    }
+    for index in range(8):
+        trip = data.entry_departure_dates[index] if index < len(data.entry_departure_dates) else None
+        slot = index + 1
+        fields[f"entry_{slot}_date_entered"] = _mmddyyyy(trip.date_entered if trip else None)
+        fields[f"entry_{slot}_date_departed"] = _mmddyyyy(trip.date_departed if trip else None)
+    for index in range(3):
+        claim = data.treaty_claims[index] if index < len(data.treaty_claims) else None
+        slot = index + 1
+        fields[f"treaty_claim_{slot}_country"] = claim.country if claim else ""
+        fields[f"treaty_claim_{slot}_article"] = claim.treaty_article if claim else ""
+        fields[f"treaty_claim_{slot}_months"] = str(claim.months_claimed_in_prior_years) if claim else ""
+        fields[f"treaty_claim_{slot}_exempt_income"] = (
+            format_irs_dollar(claim.current_year_exempt_income) if claim else ""
+        )
+
+    yes_no_fields = {
+        "applied_for_green_card": data.applied_for_green_card,
+        "was_us_citizen": data.was_us_citizen,
+        "was_green_card_holder": data.was_green_card_holder,
+        "changed_visa_status": data.changed_visa_status,
+        "previously_filed_us_return": data.previously_filed_us_return,
+        "filing_for_trust": data.filing_for_trust,
+        "trust_had_us_or_foreign_owner_or_distribution": data.trust_had_us_or_foreign_owner_or_distribution,
+        "received_total_compensation_over_250k": data.received_total_compensation_over_250k,
+        "used_alternative_compensation_sourcing_method": data.used_alternative_compensation_sourcing_method,
+        "taxed_on_treaty_exempt_income_in_foreign_country": data.taxed_on_treaty_exempt_income_in_foreign_country,
+        "claiming_competent_authority_benefits": data.claiming_competent_authority_benefits,
+    }
+    fields.update({key: "yes" if value else "no" for key, value in yes_no_fields.items()})
+    if data.commuter_from_canada:
+        fields["commuter_from_canada"] = "yes"
+    if data.commuter_from_mexico:
+        fields["commuter_from_mexico"] = "yes"
+    if data.real_property_election_first_year:
+        fields["real_property_election_first_year"] = "yes"
+    if data.real_property_election_continuing:
+        fields["real_property_election_continuing"] = "yes"
+    return fields
+
+
+def fill_1040_nr_schedule_a_fields(data: Form1040NRScheduleAInput) -> dict[str, str]:
+    return {
+        "return_name": data.return_name,
+        "return_identifying_number": digits_only(data.return_identifying_number),
+        "other_itemized_deduction_description": data.other_itemized_deduction_description,
+        **_line_fields(process_1040_nr_schedule_a(data)),
+    }
+
+
+def fill_schedule_1_a_fields(data: Schedule1AInput) -> dict[str, str]:
+    form = process_schedule_1_a(data)
+    entry_one = data.vehicle_loan_interest_entries[0] if data.vehicle_loan_interest_entries else None
+    entry_two = data.vehicle_loan_interest_entries[1] if len(data.vehicle_loan_interest_entries) > 1 else None
+    return {
+        "return_name": data.return_name,
+        "return_identifying_number": digits_only(data.return_identifying_number),
+        "line_14a": format_irs_dollar(data.qualified_overtime_w2),
+        "line_14b": format_irs_dollar(data.qualified_overtime_1099),
+        "vehicle_1_vin": entry_one.vin if entry_one else "",
+        "vehicle_1_interest_deducted_elsewhere": (
+            format_irs_dollar(entry_one.interest_deducted_elsewhere) if entry_one else ""
+        ),
+        "vehicle_1_interest_for_schedule_1a": (
+            format_irs_dollar(entry_one.interest_for_schedule_1a) if entry_one else ""
+        ),
+        "vehicle_2_vin": entry_two.vin if entry_two else "",
+        "vehicle_2_interest_deducted_elsewhere": (
+            format_irs_dollar(entry_two.interest_deducted_elsewhere) if entry_two else ""
+        ),
+        "vehicle_2_interest_for_schedule_1a": (
+            format_irs_dollar(entry_two.interest_for_schedule_1a) if entry_two else ""
+        ),
+        **_line_fields(form),
+    }
+
+
+def fill_1040_nr_schedule_nec_fields(data: Form1040NRScheduleNECInput) -> dict[str, str]:
+    form = process_1040_nr_schedule_nec(data)
+    fields = {
+        "return_name": data.return_name,
+        "return_identifying_number": digits_only(data.return_identifying_number),
+    }
+    percent = f"{int(data.other_rate_percent):02d}" if data.other_rate_percent else "00"
+    fields["other_rate_percent_tens"] = percent[0]
+    fields["other_rate_percent_ones"] = percent[1]
+
+    row_prefixes = {
+        "dividends_us_corp": "row_1a",
+        "dividends_foreign_corp": "row_1b",
+        "dividend_equivalent": "row_1c",
+        "interest_mortgage": "row_2a",
+        "interest_foreign_corp": "row_2b",
+        "interest_other": "row_2c",
+        "industrial_royalties": "row_3",
+        "motion_picture_royalties": "row_4",
+        "other_royalties": "row_5",
+        "real_property_royalties": "row_6",
+        "pensions": "row_7",
+        "social_security": "row_8",
+        "gambling_canada": "row_10",
+        "gambling_other": "row_11",
+        "other": "row_12",
+    }
+    rows_by_category = {row.category: row for row in data.income_rows}
+    for category, prefix in row_prefixes.items():
+        row = rows_by_category.get(category)
+        if category == "gambling_canada":
+            fields[f"{prefix}_winnings"] = format_irs_dollar(row.winnings) if row else ""
+            fields[f"{prefix}_losses"] = format_irs_dollar(row.losses) if row else ""
+        if category == "other":
+            description = row.description or "" if row else ""
+            fields[f"{prefix}_description_line_1"] = description[:22]
+            fields[f"{prefix}_description_line_2"] = description[22:44]
+        fields[f"{prefix}_10"] = format_irs_dollar(row.amount_at_10_percent) if row else ""
+        fields[f"{prefix}_15"] = format_irs_dollar(row.amount_at_15_percent) if row else ""
+        fields[f"{prefix}_30"] = format_irs_dollar(row.amount_at_30_percent) if row else ""
+
+    capital_gain = form.get_line("18")
+    if capital_gain:
+        fields[f"row_9_{data.capital_gain_rate_class}"] = format_irs_dollar(capital_gain)
+
+    for index in range(5):
+        tx = data.capital_transactions[index] if index < len(data.capital_transactions) else None
+        slot = index + 1
+        prefix = f"capital_tx_{slot}"
+        if tx:
+            delta = tx.proceeds - tx.cost_basis
+            fields[f"{prefix}_description"] = tx.description
+            fields[f"{prefix}_date_acquired"] = _mmddyyyy(tx.date_acquired)
+            fields[f"{prefix}_date_sold"] = _mmddyyyy(tx.date_sold)
+            fields[f"{prefix}_sales_price"] = format_irs_dollar(tx.proceeds)
+            fields[f"{prefix}_cost_basis"] = format_irs_dollar(tx.cost_basis)
+            fields[f"{prefix}_loss"] = format_irs_dollar(-delta) if delta < 0 else ""
+            fields[f"{prefix}_gain"] = format_irs_dollar(delta) if delta > 0 else ""
+        else:
+            fields[f"{prefix}_description"] = ""
+            fields[f"{prefix}_date_acquired"] = ""
+            fields[f"{prefix}_date_sold"] = ""
+            fields[f"{prefix}_sales_price"] = ""
+            fields[f"{prefix}_cost_basis"] = ""
+            fields[f"{prefix}_loss"] = ""
+            fields[f"{prefix}_gain"] = ""
+
+    fields["line_13a"] = format_irs_dollar(form.get_line("13a"))
+    fields["line_13b"] = format_irs_dollar(form.get_line("13b"))
+    fields["line_13c"] = format_irs_dollar(form.get_line("13c"))
+    fields["line_14a"] = format_irs_dollar(form.get_line("14a"))
+    fields["line_14b"] = format_irs_dollar(form.get_line("14b"))
+    fields["line_14c"] = format_irs_dollar(form.get_line("14c"))
+    fields["line_15"] = format_irs_dollar(form.get_line("15"))
+    fields["line_17f"] = format_irs_dollar(form.get_line("17f"))
+    fields["line_17g"] = format_irs_dollar(form.get_line("17g"))
+    fields["line_18"] = format_irs_dollar(form.get_line("18"))
+    for key, value in form.metadata.items():
+        fields[f"meta_{key}"] = str(value)
+    return fields
 
 
 def fill_schedule_1_fields(data: Schedule1Input) -> dict[str, str]:

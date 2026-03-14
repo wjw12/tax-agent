@@ -13,7 +13,12 @@ from .core import FormComputation
 from .models import (
     BaseFormInput,
     Form1040Input,
+    Form1040NRScheduleAInput,
+    Form1040NRScheduleNECInput,
+    Form1040NRScheduleOIInput,
+    Form1040NRInput,
     Form1040SRInput,
+    Schedule1AInput,
     Form2441Input,
     Form4562Input,
     Form8862Input,
@@ -38,6 +43,10 @@ from .models import (
 )
 from .pdf_fillers import (
     fill_1040_fields,
+    fill_1040_nr_schedule_a_fields,
+    fill_1040_nr_schedule_nec_fields,
+    fill_1040_nr_schedule_oi_fields,
+    fill_1040_nr_fields,
     fill_1040_sr_fields,
     fill_2441_fields,
     fill_4562_fields,
@@ -50,6 +59,7 @@ from .pdf_fillers import (
     fill_8962_fields,
     fill_8995_a_fields,
     fill_8995_fields,
+    fill_schedule_1_a_fields,
     fill_schedule_1_fields,
     fill_schedule_2_fields,
     fill_schedule_3_fields,
@@ -63,6 +73,10 @@ from .pdf_fillers import (
 )
 from .processors import (
     process_1040,
+    process_1040_nr_schedule_a,
+    process_1040_nr_schedule_nec,
+    process_1040_nr_schedule_oi,
+    process_1040_nr,
     process_1040_sr,
     process_2441,
     process_4562,
@@ -75,6 +89,7 @@ from .processors import (
     process_8962,
     process_8995,
     process_8995_a,
+    process_schedule_1_a,
     process_schedule_1,
     process_schedule_2,
     process_schedule_3,
@@ -101,8 +116,45 @@ class FormDefinition:
 
 FORM_DEFINITIONS: dict[str, FormDefinition] = {
     "1040": FormDefinition("1040", "Form 1040", "f1040.pdf", "1040.json", Form1040Input, process_1040, fill_1040_fields),
+    "1040-NR": FormDefinition("1040-NR", "Form 1040-NR", "f1040nr.pdf", "1040-nr.json", Form1040NRInput, process_1040_nr, fill_1040_nr_fields),
+    "1040-NR-Schedule-OI": FormDefinition(
+        "1040-NR-Schedule-OI",
+        "Schedule OI (Form 1040-NR)",
+        "f1040nro.pdf",
+        "1040-nr-schedule-oi.json",
+        Form1040NRScheduleOIInput,
+        process_1040_nr_schedule_oi,
+        fill_1040_nr_schedule_oi_fields,
+    ),
+    "1040-NR-Schedule-A": FormDefinition(
+        "1040-NR-Schedule-A",
+        "Schedule A (Form 1040-NR)",
+        "f1040nra.pdf",
+        "1040-nr-schedule-a.json",
+        Form1040NRScheduleAInput,
+        process_1040_nr_schedule_a,
+        fill_1040_nr_schedule_a_fields,
+    ),
+    "1040-NR-Schedule-NEC": FormDefinition(
+        "1040-NR-Schedule-NEC",
+        "Schedule NEC (Form 1040-NR)",
+        "f1040nrn.pdf",
+        "1040-nr-schedule-nec.json",
+        Form1040NRScheduleNECInput,
+        process_1040_nr_schedule_nec,
+        fill_1040_nr_schedule_nec_fields,
+    ),
     "1040-SR": FormDefinition("1040-SR", "Form 1040-SR", "f1040s.pdf", "1040-sr.json", Form1040SRInput, process_1040_sr, fill_1040_sr_fields),
     "1040-Schedule-1": FormDefinition("1040-Schedule-1", "Schedule 1 (Form 1040)", "f1040s1.pdf", "1040-schedule-1.json", Schedule1Input, process_schedule_1, fill_schedule_1_fields),
+    "1040-Schedule-1-A": FormDefinition(
+        "1040-Schedule-1-A",
+        "Schedule 1-A (Form 1040)",
+        "f1040s1a.pdf",
+        "1040-schedule-1-a.json",
+        Schedule1AInput,
+        process_schedule_1_a,
+        fill_schedule_1_a_fields,
+    ),
     "1040-Schedule-2": FormDefinition("1040-Schedule-2", "Schedule 2 (Form 1040)", "f1040s2.pdf", "1040-schedule-2.json", Schedule2Input, process_schedule_2, fill_schedule_2_fields),
     "1040-Schedule-3": FormDefinition("1040-Schedule-3", "Schedule 3 (Form 1040)", "f1040s3.pdf", "1040-schedule-3.json", Schedule3Input, process_schedule_3, fill_schedule_3_fields),
     "1040-Schedule-A": FormDefinition("1040-Schedule-A", "Schedule A (Form 1040)", "f1040sa.pdf", "1040-schedule-a.json", ScheduleAInput, process_schedule_a, fill_schedule_a_fields),
@@ -169,4 +221,3 @@ def validate_manifest_coverage(manifest_path: str | Path) -> dict[str, list[str]
         "missing_fillers": missing_fillers,
         "missing_samples": missing_samples,
     }
-

@@ -9,18 +9,35 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+FederalFilingStatus = Literal[
+    "single",
+    "married_filing_jointly",
+    "married_filing_separately",
+    "head_of_household",
+    "qualifying_surviving_spouse",
+]
+
+NonresidentFilingStatus = Literal[
+    "single",
+    "married_filing_separately",
+    "qualifying_surviving_spouse",
+]
+
+
 class Address(BaseModel):
     line1: str
     line2: str | None = None
     city: str
     state: str
     postal_code: str
+    country: str | None = None
 
 
 class TaxpayerIdentity(BaseModel):
     first_name: str
     last_name: str
-    ssn: str
+    ssn: str | None = None
+    identifying_number: str | None = None
     address: Address
     date_of_birth: date | None = None
     occupation: str | None = None
@@ -151,6 +168,51 @@ class MonthlyMarketplaceEntry(BaseModel):
     advance_payment_ptc: Decimal
 
 
+class EntryExitDate(BaseModel):
+    date_entered: date | None = None
+    date_departed: date | None = None
+
+
+class TreatyClaim(BaseModel):
+    country: str
+    treaty_article: str
+    months_claimed_in_prior_years: int = 0
+    current_year_exempt_income: Decimal = Decimal("0")
+
+
+class VehicleLoanInterestEntry(BaseModel):
+    vin: str
+    interest_deducted_elsewhere: Decimal = Decimal("0")
+    interest_for_schedule_1a: Decimal = Decimal("0")
+
+
+class ScheduleNECIncomeRow(BaseModel):
+    category: Literal[
+        "dividends_us_corp",
+        "dividends_foreign_corp",
+        "dividend_equivalent",
+        "interest_mortgage",
+        "interest_foreign_corp",
+        "interest_other",
+        "industrial_royalties",
+        "motion_picture_royalties",
+        "other_royalties",
+        "real_property_royalties",
+        "pensions",
+        "social_security",
+        "gambling_canada",
+        "gambling_other",
+        "other",
+    ]
+    amount_at_10_percent: Decimal = Decimal("0")
+    amount_at_15_percent: Decimal = Decimal("0")
+    amount_at_30_percent: Decimal = Decimal("0")
+    amount_at_other_rate: Decimal = Decimal("0")
+    description: str | None = None
+    winnings: Decimal = Decimal("0")
+    losses: Decimal = Decimal("0")
+
+
 class BaseFormInput(BaseModel):
     form_code: str
     tax_year: int = 2025
@@ -158,13 +220,7 @@ class BaseFormInput(BaseModel):
 
 class Form1040Input(BaseFormInput):
     form_code: Literal["1040"] = "1040"
-    filing_status: Literal[
-        "single",
-        "married_filing_jointly",
-        "married_filing_separately",
-        "head_of_household",
-        "qualifying_surviving_spouse",
-    ]
+    filing_status: FederalFilingStatus
     taxpayer: TaxpayerIdentity
     spouse: TaxpayerIdentity | None = None
     dependents: list[QualifyingChild | OtherDependent] = Field(default_factory=list)
@@ -198,10 +254,129 @@ class Form1040SRInput(Form1040Input):
     form_code: Literal["1040-SR"] = "1040-SR"
 
 
+class Form1040NRInput(BaseFormInput):
+    form_code: Literal["1040-NR"] = "1040-NR"
+    residency_status: Literal["nonresident_alien"] = "nonresident_alien"
+    filing_status: NonresidentFilingStatus
+    taxpayer: TaxpayerIdentity
+    dependents: list[QualifyingChild | OtherDependent] = Field(default_factory=list)
+    digital_assets: bool = False
+    country_of_citizenship: str | None = None
+    country_of_tax_residence: str | None = None
+    visa_type: str | None = None
+    days_present_in_us: int | None = None
+    claims_treaty_benefits: bool = False
+    treaty_country: str | None = None
+    has_dual_status: bool = False
+    qualifying_person_name: str | None = None
+    wages: Decimal = Decimal("0")
+    taxable_interest: Decimal = Decimal("0")
+    ordinary_dividends: Decimal = Decimal("0")
+    qualified_dividends: Decimal = Decimal("0")
+    ira_distributions: Decimal = Decimal("0")
+    taxable_ira_distributions: Decimal = Decimal("0")
+    pension_annuity_income: Decimal = Decimal("0")
+    taxable_pension_annuity_income: Decimal = Decimal("0")
+    capital_gain_or_loss: Decimal = Decimal("0")
+    schedule_1_additional_income: Decimal = Decimal("0")
+    treaty_exempt_income: Decimal = Decimal("0")
+    schedule_1_adjustments: Decimal = Decimal("0")
+    itemized_deductions: Decimal = Decimal("0")
+    standard_deduction: Decimal = Decimal("0")
+    qbi_deduction: Decimal = Decimal("0")
+    estate_or_trust_exemption: Decimal = Decimal("0")
+    schedule_1a_additional_deductions: Decimal = Decimal("0")
+    tax_before_credits: Decimal = Decimal("0")
+    schedule_2_additional_taxes: Decimal = Decimal("0")
+    child_tax_credit_or_other_dependent_credit: Decimal = Decimal("0")
+    schedule_3_nonrefundable_credits: Decimal = Decimal("0")
+    nec_tax: Decimal = Decimal("0")
+    other_taxes: Decimal = Decimal("0")
+    transportation_tax: Decimal = Decimal("0")
+    withholding_w2: Decimal = Decimal("0")
+    withholding_1099: Decimal = Decimal("0")
+    withholding_other_forms: Decimal = Decimal("0")
+    withholding_8805: Decimal = Decimal("0")
+    withholding_8288a: Decimal = Decimal("0")
+    withholding_1042s: Decimal = Decimal("0")
+    estimated_tax_payments: Decimal = Decimal("0")
+    additional_child_tax_credit: Decimal = Decimal("0")
+    form_1040c_credit: Decimal = Decimal("0")
+    refundable_adoption_credit: Decimal = Decimal("0")
+    schedule_3_refundable_credits: Decimal = Decimal("0")
+    amount_applied_to_next_year: Decimal = Decimal("0")
+
+
+class Form1040NRScheduleOIInput(BaseFormInput):
+    form_code: Literal["1040-NR-Schedule-OI"] = "1040-NR-Schedule-OI"
+    return_name: str = ""
+    return_identifying_number: str = ""
+    citizenship_countries: str = ""
+    tax_residence_country: str = ""
+    visa_type: str = ""
+    applied_for_green_card: bool = False
+    was_us_citizen: bool = False
+    was_green_card_holder: bool = False
+    changed_visa_status: bool = False
+    visa_status_change_details: str = ""
+    entry_departure_dates: list[EntryExitDate] = Field(default_factory=list)
+    commuter_from_canada: bool = False
+    commuter_from_mexico: bool = False
+    days_in_us_2023: int = 0
+    days_in_us_2024: int = 0
+    days_in_us_2025: int = 0
+    previously_filed_us_return: bool = False
+    prior_filing_year_and_form: str = ""
+    filing_for_trust: bool = False
+    trust_had_us_or_foreign_owner_or_distribution: bool = False
+    received_total_compensation_over_250k: bool = False
+    used_alternative_compensation_sourcing_method: bool = False
+    treaty_claims: list[TreatyClaim] = Field(default_factory=list)
+    taxed_on_treaty_exempt_income_in_foreign_country: bool = False
+    claiming_competent_authority_benefits: bool = False
+    real_property_election_first_year: bool = False
+    real_property_election_continuing: bool = False
+
+
+class Form1040NRScheduleAInput(BaseFormInput):
+    form_code: Literal["1040-NR-Schedule-A"] = "1040-NR-Schedule-A"
+    return_name: str = ""
+    return_identifying_number: str = ""
+    filing_status: NonresidentFilingStatus
+    form_1040_nr_line_11b: Decimal = Decimal("0")
+    state_local_income_taxes: Decimal = Decimal("0")
+    gifts_by_cash_or_check: Decimal = Decimal("0")
+    other_than_cash_or_check_gifts: Decimal = Decimal("0")
+    charitable_carryover_from_prior_year: Decimal = Decimal("0")
+    casualty_and_theft_losses: Decimal = Decimal("0")
+    other_itemized_deduction_description: str = ""
+    other_itemized_deduction_amount: Decimal = Decimal("0")
+
+
 class Schedule1Input(BaseFormInput):
     form_code: Literal["1040-Schedule-1"] = "1040-Schedule-1"
     additional_income_items: list[NamedAmount] = Field(default_factory=list)
     adjustment_items: list[NamedAmount] = Field(default_factory=list)
+
+
+class Schedule1AInput(BaseFormInput):
+    form_code: Literal["1040-Schedule-1-A"] = "1040-Schedule-1-A"
+    return_name: str = ""
+    return_identifying_number: str = ""
+    filing_status: FederalFilingStatus
+    modified_agi_base: Decimal
+    excluded_income_puerto_rico: Decimal = Decimal("0")
+    form_2555_line_45: Decimal = Decimal("0")
+    form_2555_line_50: Decimal = Decimal("0")
+    form_4563_line_15: Decimal = Decimal("0")
+    qualified_tips_w2: Decimal = Decimal("0")
+    qualified_tips_form_4137: Decimal = Decimal("0")
+    qualified_tips_trade_or_business: Decimal = Decimal("0")
+    qualified_overtime_w2: Decimal = Decimal("0")
+    qualified_overtime_1099: Decimal = Decimal("0")
+    vehicle_loan_interest_entries: list[VehicleLoanInterestEntry] = Field(default_factory=list)
+    taxpayer_is_eligible_senior: bool = False
+    spouse_is_eligible_senior: bool = False
 
 
 class Schedule2Input(BaseFormInput):
@@ -249,6 +424,16 @@ class ScheduleDInput(BaseFormInput):
     long_term_totals: list[NamedAmount] = Field(default_factory=list)
     short_term_carryover: Decimal = Decimal("0")
     long_term_carryover: Decimal = Decimal("0")
+
+
+class Form1040NRScheduleNECInput(BaseFormInput):
+    form_code: Literal["1040-NR-Schedule-NEC"] = "1040-NR-Schedule-NEC"
+    return_name: str = ""
+    return_identifying_number: str = ""
+    other_rate_percent: Decimal = Decimal("0")
+    income_rows: list[ScheduleNECIncomeRow] = Field(default_factory=list)
+    capital_transactions: list[CapitalTransaction] = Field(default_factory=list)
+    capital_gain_rate_class: Literal["10", "15", "30", "other"] = "30"
 
 
 class Form8949Input(BaseFormInput):
@@ -324,13 +509,7 @@ class ScheduleEICInput(BaseFormInput):
     form_code: Literal["1040-Schedule-EIC"] = "1040-Schedule-EIC"
     return_name: str = ""
     return_ssn: str = ""
-    filing_status: Literal[
-        "single",
-        "married_filing_jointly",
-        "married_filing_separately",
-        "head_of_household",
-        "qualifying_surviving_spouse",
-    ]
+    filing_status: FederalFilingStatus
     earned_income: Decimal
     agi: Decimal
     investment_income: Decimal = Decimal("0")
@@ -378,13 +557,7 @@ class Form2441Input(BaseFormInput):
 
 class Form8863Input(BaseFormInput):
     form_code: Literal["8863"] = "8863"
-    filing_status: Literal[
-        "single",
-        "married_filing_jointly",
-        "married_filing_separately",
-        "head_of_household",
-        "qualifying_surviving_spouse",
-    ]
+    filing_status: FederalFilingStatus
     modified_agi: Decimal
     students: list[StudentExpense] = Field(default_factory=list)
 

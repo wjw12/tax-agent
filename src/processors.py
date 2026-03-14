@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
-from decimal import Decimal, ROUND_CEILING
+from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR
 
 from .core import FormComputation, sum_decimals, to_decimal
 from .models import (
     Form1040Input,
+    Form1040NRScheduleAInput,
+    Form1040NRScheduleNECInput,
+    Form1040NRScheduleOIInput,
+    Form1040NRInput,
     Form1040SRInput,
+    Schedule1AInput,
     Form2441Input,
     Form4562Input,
     Form8862Input,
@@ -34,6 +39,14 @@ from .models import (
 
 def _sum_named_amounts(items) -> Decimal:
     return sum_decimals(item.amount for item in items)
+
+
+def _thousands_floor(value: Decimal) -> Decimal:
+    return (value / Decimal("1000")).to_integral_value(rounding=ROUND_FLOOR)
+
+
+def _thousands_ceiling(value: Decimal) -> Decimal:
+    return (value / Decimal("1000")).to_integral_value(rounding=ROUND_CEILING)
 
 
 def process_1040(data: Form1040Input) -> FormComputation:
@@ -108,6 +121,277 @@ def process_1040_sr(data: Form1040SRInput) -> FormComputation:
     return result
 
 
+def process_1040_nr(data: Form1040NRInput) -> FormComputation:
+    effectively_connected_income = (
+        data.wages
+        + data.taxable_interest
+        + data.ordinary_dividends
+        + data.taxable_ira_distributions
+        + data.taxable_pension_annuity_income
+        + data.capital_gain_or_loss
+        + data.schedule_1_additional_income
+    )
+    adjusted_gross_income = effectively_connected_income - data.schedule_1_adjustments
+    total_deductions = (
+        max(data.itemized_deductions, data.standard_deduction)
+        + data.qbi_deduction
+        + data.estate_or_trust_exemption
+        + data.schedule_1a_additional_deductions
+    )
+    taxable_income = max(Decimal("0"), adjusted_gross_income - total_deductions)
+    tax_before_credits = data.tax_before_credits + data.schedule_2_additional_taxes
+    total_credits = (
+        data.child_tax_credit_or_other_dependent_credit + data.schedule_3_nonrefundable_credits
+    )
+    tax_after_credits = max(Decimal("0"), tax_before_credits - total_credits)
+    total_other_taxes = data.nec_tax + data.other_taxes + data.transportation_tax
+    total_tax = tax_after_credits + total_other_taxes
+    withholding_total = data.withholding_w2 + data.withholding_1099 + data.withholding_other_forms
+    total_other_payments = (
+        data.additional_child_tax_credit
+        + data.form_1040c_credit
+        + data.refundable_adoption_credit
+        + data.schedule_3_refundable_credits
+    )
+    total_payments = (
+        withholding_total
+        + data.withholding_8805
+        + data.withholding_8288a
+        + data.withholding_1042s
+        + data.estimated_tax_payments
+        + total_other_payments
+    )
+    overpayment = max(Decimal("0"), total_payments - total_tax)
+    amount_owed = max(Decimal("0"), total_tax - total_payments)
+
+    form = FormComputation(form_code=data.form_code, form_name="Form 1040-NR")
+    form.metadata.update(
+        {
+            "filing_status": data.filing_status,
+            "taxpayer_name": f"{data.taxpayer.first_name} {data.taxpayer.last_name}",
+            "dependent_count": len(data.dependents),
+            "digital_assets": data.digital_assets,
+            "country_of_citizenship": data.country_of_citizenship or "",
+            "country_of_tax_residence": data.country_of_tax_residence or "",
+            "visa_type": data.visa_type or "",
+            "days_present_in_us": data.days_present_in_us or 0,
+            "claims_treaty_benefits": data.claims_treaty_benefits,
+            "treaty_country": data.treaty_country or "",
+            "has_dual_status": data.has_dual_status,
+        }
+    )
+    form.add_line("1a", "Wages, salaries, tips, etc.", data.wages)
+    form.add_line("1k", "Total income exempt by treaty from Schedule OI", data.treaty_exempt_income)
+    form.add_line("1z", "Add lines 1a through 1h", data.wages, formula="1a")
+    form.add_line("2b", "Taxable interest", data.taxable_interest)
+    form.add_line("3a", "Qualified dividends", data.qualified_dividends)
+    form.add_line("3b", "Ordinary dividends", data.ordinary_dividends)
+    form.add_line("4a", "IRA distributions", data.ira_distributions)
+    form.add_line("4b", "Taxable IRA distributions", data.taxable_ira_distributions)
+    form.add_line("5a", "Pensions and annuities", data.pension_annuity_income)
+    form.add_line("5b", "Taxable pensions and annuities", data.taxable_pension_annuity_income)
+    form.add_line("7a", "Capital gain or loss", data.capital_gain_or_loss)
+    form.add_line("8", "Other income from Schedule 1", data.schedule_1_additional_income)
+    form.add_line(
+        "9",
+        "Total effectively connected income",
+        effectively_connected_income,
+        formula="1a+2b+3b+4b+5b+7a+8",
+    )
+    form.add_line("11a", "Adjustments to income", data.schedule_1_adjustments)
+    form.add_line("11b", "Adjusted gross income", adjusted_gross_income, formula="9-11a")
+    form.add_line("12", "Itemized or standard deduction", max(data.itemized_deductions, data.standard_deduction))
+    form.add_line("13a", "Qualified business income deduction", data.qbi_deduction)
+    form.add_line("13b", "Estate or trust exemption", data.estate_or_trust_exemption)
+    form.add_line("13c", "Additional deductions from Schedule 1-A", data.schedule_1a_additional_deductions)
+    form.add_line("14", "Total deductions", total_deductions, formula="12+13a+13b+13c")
+    form.add_line("15", "Taxable income", taxable_income, formula="max(0,11b-14)")
+    form.add_line("16", "Tax", data.tax_before_credits)
+    form.add_line("17", "Additional taxes from Schedule 2", data.schedule_2_additional_taxes)
+    form.add_line("18", "Tax before credits", tax_before_credits, formula="16+17")
+    form.add_line(
+        "19",
+        "Child tax credit or credit for other dependents",
+        data.child_tax_credit_or_other_dependent_credit,
+    )
+    form.add_line("20", "Nonrefundable credits from Schedule 3", data.schedule_3_nonrefundable_credits)
+    form.add_line("21", "Total credits", total_credits, formula="19+20")
+    form.add_line("22", "Tax after credits", tax_after_credits, formula="max(0,18-21)")
+    form.add_line("23a", "Tax on income not effectively connected with a U.S. trade or business", data.nec_tax)
+    form.add_line("23b", "Other taxes", data.other_taxes)
+    form.add_line("23c", "Transportation tax", data.transportation_tax)
+    form.add_line("23d", "Total other taxes", total_other_taxes, formula="23a+23b+23c")
+    form.add_line("24", "Total tax", total_tax, formula="22+23d")
+    form.add_line("25a", "Federal income tax withheld from Forms W-2", data.withholding_w2)
+    form.add_line("25b", "Federal income tax withheld from Forms 1099", data.withholding_1099)
+    form.add_line("25c", "Federal income tax withheld from other forms", data.withholding_other_forms)
+    form.add_line("25d", "Total withholding from Forms W-2, 1099, and other forms", withholding_total, formula="25a+25b+25c")
+    form.add_line("25e", "Federal income tax withheld from Forms 8805", data.withholding_8805)
+    form.add_line("25f", "Federal income tax withheld from Forms 8288-A", data.withholding_8288a)
+    form.add_line("25g", "Federal income tax withheld from Forms 1042-S", data.withholding_1042s)
+    form.add_line("26", "Estimated tax payments and amount applied from 2024 return", data.estimated_tax_payments)
+    form.add_line("28", "Additional child tax credit", data.additional_child_tax_credit)
+    form.add_line("29", "Credit for amount paid with Form 1040-C", data.form_1040c_credit)
+    form.add_line("30", "Refundable adoption credit", data.refundable_adoption_credit)
+    form.add_line("31", "Refundable credits from Schedule 3", data.schedule_3_refundable_credits)
+    form.add_line("32", "Total other payments and refundable credits", total_other_payments, formula="28+29+30+31")
+    form.add_line("33", "Total payments", total_payments, formula="25d+25e+25f+25g+26+32")
+    form.add_line("34", "Overpayment", overpayment, formula="max(0,33-24)")
+    form.add_line("35a", "Refund amount", max(Decimal("0"), overpayment - data.amount_applied_to_next_year))
+    form.add_line("36", "Amount applied to 2026 estimated tax", data.amount_applied_to_next_year)
+    form.add_line("37", "Amount you owe", amount_owed, formula="max(0,24-33)")
+    form.add_line("38", "Estimated tax penalty", Decimal("0"))
+    return form
+
+
+def process_1040_nr_schedule_oi(data: Form1040NRScheduleOIInput) -> FormComputation:
+    form = FormComputation(form_code=data.form_code, form_name="Schedule OI (Form 1040-NR)")
+    treaty_total = sum_decimals(claim.current_year_exempt_income for claim in data.treaty_claims)
+    form.metadata.update(
+        {
+            "return_name": data.return_name,
+            "return_identifying_number": data.return_identifying_number,
+            "citizenship_countries": data.citizenship_countries,
+            "tax_residence_country": data.tax_residence_country,
+            "visa_type": data.visa_type,
+            "entry_exit_count": len(data.entry_departure_dates),
+            "treaty_claim_count": len(data.treaty_claims),
+        }
+    )
+    form.add_line("l1e", "Total treaty-exempt income", treaty_total)
+    return form
+
+
+def process_1040_nr_schedule_a(data: Form1040NRScheduleAInput) -> FormComputation:
+    state_tax_cap = Decimal("20000") if data.filing_status == "married_filing_separately" else Decimal("40000")
+    deductible_state_taxes = min(data.state_local_income_taxes, state_tax_cap)
+    charity_total = (
+        data.gifts_by_cash_or_check
+        + data.other_than_cash_or_check_gifts
+        + data.charitable_carryover_from_prior_year
+    )
+    total_itemized = (
+        deductible_state_taxes
+        + charity_total
+        + data.casualty_and_theft_losses
+        + data.other_itemized_deduction_amount
+    )
+    form = FormComputation(form_code=data.form_code, form_name="Schedule A (Form 1040-NR)")
+    form.metadata["other_itemized_deduction_description"] = data.other_itemized_deduction_description
+    form.add_line("1a", "State and local income taxes", data.state_local_income_taxes)
+    form.add_line("1b", "Deductible state and local income taxes", deductible_state_taxes)
+    form.add_line("2", "Gifts by cash or check", data.gifts_by_cash_or_check)
+    form.add_line("3", "Other than by cash or check", data.other_than_cash_or_check_gifts)
+    form.add_line("4", "Carryover from prior year", data.charitable_carryover_from_prior_year)
+    form.add_line("5", "Total charitable contributions", charity_total, formula="2+3+4")
+    form.add_line("6", "Casualty and theft losses", data.casualty_and_theft_losses)
+    form.add_line("7", "Other itemized deductions", data.other_itemized_deduction_amount)
+    form.add_line("8", "Total itemized deductions", total_itemized, formula="1b+5+6+7")
+    return form
+
+
+def process_schedule_1_a(data: Schedule1AInput) -> FormComputation:
+    jointly = data.filing_status == "married_filing_jointly"
+    modified_agi_adjustments = (
+        data.excluded_income_puerto_rico
+        + data.form_2555_line_45
+        + data.form_2555_line_50
+        + data.form_4563_line_15
+    )
+    line_3 = data.modified_agi_base + modified_agi_adjustments
+    line_4c = max(data.qualified_tips_w2, data.qualified_tips_form_4137)
+    line_6 = line_4c + data.qualified_tips_trade_or_business
+    line_7 = min(line_6, Decimal("25000"))
+    line_9 = Decimal("300000") if jointly else Decimal("150000")
+    line_10 = max(Decimal("0"), line_3 - line_9)
+    line_11 = _thousands_floor(line_10) if line_10 > 0 else Decimal("0")
+    line_12 = line_11 * Decimal("100")
+    line_13 = max(Decimal("0"), line_7 - line_12)
+
+    line_14c = data.qualified_overtime_w2 + data.qualified_overtime_1099
+    line_15 = min(line_14c, Decimal("25000") if jointly else Decimal("12500"))
+    line_17 = Decimal("300000") if jointly else Decimal("150000")
+    line_18 = max(Decimal("0"), line_3 - line_17)
+    line_19 = _thousands_floor(line_18) if line_18 > 0 else Decimal("0")
+    line_20 = line_19 * Decimal("100")
+    line_21 = max(Decimal("0"), line_15 - line_20)
+
+    entry_one = data.vehicle_loan_interest_entries[0] if data.vehicle_loan_interest_entries else None
+    entry_two = data.vehicle_loan_interest_entries[1] if len(data.vehicle_loan_interest_entries) > 1 else None
+    line_23 = sum_decimals(entry.interest_for_schedule_1a for entry in data.vehicle_loan_interest_entries[:2])
+    line_24 = min(line_23, Decimal("10000"))
+    line_26 = Decimal("200000") if jointly else Decimal("100000")
+    line_27 = max(Decimal("0"), line_3 - line_26)
+    line_28 = _thousands_ceiling(line_27) if line_27 > 0 else Decimal("0")
+    line_29 = line_28 * Decimal("200")
+    line_30 = line_24 if line_27 <= 0 else max(Decimal("0"), line_24 - line_29)
+
+    line_32 = Decimal("150000") if jointly else Decimal("75000")
+    line_33 = max(Decimal("0"), line_3 - line_32)
+    line_34 = line_33 * Decimal("0.06")
+    line_35 = max(Decimal("0"), Decimal("6000") - line_34)
+    line_36a = line_35 if data.taxpayer_is_eligible_senior else Decimal("0")
+    line_36b = line_35 if jointly and data.spouse_is_eligible_senior else Decimal("0")
+    line_37 = line_36a + line_36b
+    line_38 = line_13 + line_21 + line_30 + line_37
+
+    form = FormComputation(form_code=data.form_code, form_name="Schedule 1-A (Form 1040)")
+    form.metadata.update(
+        {
+            "return_name": data.return_name,
+            "return_identifying_number": data.return_identifying_number,
+            "filing_status": data.filing_status,
+            "vehicle_1_vin": entry_one.vin if entry_one else "",
+            "vehicle_2_vin": entry_two.vin if entry_two else "",
+        }
+    )
+    form.add_line("1", "Amount from Form 1040, 1040-SR, or 1040-NR line 11b", data.modified_agi_base)
+    form.add_line("2a", "Excluded Puerto Rico income", data.excluded_income_puerto_rico)
+    form.add_line("2b", "Form 2555 line 45", data.form_2555_line_45)
+    form.add_line("2c", "Form 2555 line 50", data.form_2555_line_50)
+    form.add_line("2d", "Form 4563 line 15", data.form_4563_line_15)
+    form.add_line("2e", "Total MAGI adjustments", modified_agi_adjustments, formula="2a+2b+2c+2d")
+    form.add_line("3", "Modified adjusted gross income", line_3, formula="1+2e")
+    form.add_line("4a", "Qualified tips from Form W-2", data.qualified_tips_w2)
+    form.add_line("4b", "Qualified tips from Form 4137", data.qualified_tips_form_4137)
+    form.add_line("4c", "Qualified employee tips used for deduction", line_4c, formula="max(4a,4b)")
+    form.add_line("5", "Qualified tips from trade or business", data.qualified_tips_trade_or_business)
+    form.add_line("6", "Total qualified tips", line_6, formula="4c+5")
+    form.add_line("7", "Tip deduction cap", line_7)
+    form.add_line("8", "Amount from line 3", line_3)
+    form.add_line("9", "MAGI threshold for tip deduction", line_9)
+    form.add_line("10", "Excess MAGI over threshold", line_10, formula="max(0,8-9)")
+    form.add_line("11", "Thousands of excess MAGI", line_11)
+    form.add_line("12", "MAGI phaseout amount", line_12, formula="11*100")
+    form.add_line("13", "Qualified tips deduction", line_13, formula="max(0,7-12)")
+    form.add_line("14c", "Total qualified overtime compensation", line_14c, formula="14a+14b")
+    form.add_line("15", "Overtime deduction cap", line_15)
+    form.add_line("16", "Amount from line 3", line_3)
+    form.add_line("17", "MAGI threshold for overtime deduction", line_17)
+    form.add_line("18", "Excess MAGI over threshold", line_18, formula="max(0,16-17)")
+    form.add_line("19", "Thousands of excess MAGI", line_19)
+    form.add_line("20", "MAGI phaseout amount", line_20, formula="19*100")
+    form.add_line("21", "Qualified overtime compensation deduction", line_21, formula="max(0,15-20)")
+    form.add_line("23", "Qualified passenger vehicle loan interest", line_23)
+    form.add_line("24", "Qualified passenger vehicle loan interest cap", line_24)
+    form.add_line("25", "Amount from line 3", line_3)
+    form.add_line("26", "MAGI threshold for car loan interest deduction", line_26)
+    form.add_line("27", "Excess MAGI over threshold", line_27, formula="max(0,25-26)")
+    form.add_line("28", "Thousands of excess MAGI rounded up", line_28)
+    form.add_line("29", "MAGI phaseout amount", line_29, formula="28*200")
+    form.add_line("30", "Qualified passenger vehicle loan interest deduction", line_30)
+    form.add_line("31", "Amount from line 3", line_3)
+    form.add_line("32", "MAGI threshold for enhanced senior deduction", line_32)
+    form.add_line("33", "Excess MAGI over threshold", line_33, formula="max(0,31-32)")
+    form.add_line("34", "Senior deduction phaseout amount", line_34, formula="33*0.06")
+    form.add_line("35", "Base enhanced senior deduction amount", line_35)
+    form.add_line("36a", "Taxpayer enhanced senior deduction", line_36a)
+    form.add_line("36b", "Spouse enhanced senior deduction", line_36b)
+    form.add_line("37", "Enhanced deduction for seniors", line_37, formula="36a+36b")
+    form.add_line("38", "Total additional deductions", line_38, formula="13+21+30+37")
+    return form
+
+
 def process_schedule_1(data: Schedule1Input) -> FormComputation:
     additional_income = _sum_named_amounts(data.additional_income_items)
     adjustments = _sum_named_amounts(data.adjustment_items)
@@ -116,6 +400,62 @@ def process_schedule_1(data: Schedule1Input) -> FormComputation:
     form.metadata["adjustment_descriptions"] = [item.description for item in data.adjustment_items]
     form.add_line("10", "Additional income total", additional_income)
     form.add_line("26", "Adjustments total", adjustments)
+    return form
+
+
+def process_1040_nr_schedule_nec(data: Form1040NRScheduleNECInput) -> FormComputation:
+    capital_loss = Decimal("0")
+    capital_gain = Decimal("0")
+    for tx in data.capital_transactions[:5]:
+        delta = tx.proceeds - tx.cost_basis
+        if delta >= 0:
+            capital_gain += delta
+        else:
+            capital_loss += -delta
+    line_18 = max(Decimal("0"), capital_gain - capital_loss)
+
+    total_10 = sum_decimals(row.amount_at_10_percent for row in data.income_rows)
+    total_15 = sum_decimals(row.amount_at_15_percent for row in data.income_rows)
+    total_30 = sum_decimals(row.amount_at_30_percent for row in data.income_rows)
+    total_other = sum_decimals(row.amount_at_other_rate for row in data.income_rows)
+    if data.capital_gain_rate_class == "10":
+        total_10 += line_18
+    elif data.capital_gain_rate_class == "15":
+        total_15 += line_18
+    elif data.capital_gain_rate_class == "30":
+        total_30 += line_18
+    else:
+        total_other += line_18
+
+    tax_10 = total_10 * Decimal("0.10")
+    tax_15 = total_15 * Decimal("0.15")
+    tax_30 = total_30 * Decimal("0.30")
+    tax_other = total_other * (data.other_rate_percent / Decimal("100"))
+    line_15 = tax_10 + tax_15 + tax_30 + tax_other
+
+    form = FormComputation(form_code=data.form_code, form_name="Schedule NEC (Form 1040-NR)")
+    form.metadata.update(
+        {
+            "return_name": data.return_name,
+            "return_identifying_number": data.return_identifying_number,
+            "other_rate_percent": str(data.other_rate_percent),
+            "income_row_count": len(data.income_rows),
+            "capital_transaction_count": len(data.capital_transactions),
+            "capital_gain_rate_class": data.capital_gain_rate_class,
+        }
+    )
+    form.add_line("13a", "Total income taxed at 10%", total_10)
+    form.add_line("13b", "Total income taxed at 15%", total_15)
+    form.add_line("13c", "Total income taxed at 30%", total_30)
+    form.add_line("13d", "Total income taxed at other rate", total_other)
+    form.add_line("14a", "Tax on 10% income", tax_10)
+    form.add_line("14b", "Tax on 15% income", tax_15)
+    form.add_line("14c", "Tax on 30% income", tax_30)
+    form.add_line("14d", "Tax on other-rate income", tax_other)
+    form.add_line("15", "Tax on income not effectively connected with a U.S. trade or business", line_15)
+    form.add_line("17f", "Capital transaction losses", capital_loss)
+    form.add_line("17g", "Capital transaction gains", capital_gain)
+    form.add_line("18", "Net capital gain", line_18)
     return form
 
 
