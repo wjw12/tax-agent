@@ -39,6 +39,13 @@ Use the existing workspace environment pattern from `AGENTS.md`:
 uv run --python .venv/bin/python --no-project ...
 ```
 
+Main prompt and sub-agent docs:
+
+- `AGENTS.md` for intake and coordinator behavior
+- `workspace/EXTRACTOR.md` and `workspace/PDF_ROUTING.md` for the extraction sub-agent
+- `workspace/REVIEW.md` and `workspace/TAX_AUDIT_METHODOLOGY.md` for the review sub-agent
+- `workspace/PDF_FILLING.md` for the PDF filling sub-agent
+
 Default batch PDF processing now lives in:
 
 ```bash

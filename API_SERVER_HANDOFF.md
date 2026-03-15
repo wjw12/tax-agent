@@ -102,8 +102,7 @@ When `tax-agent` uses `tax-server`:
    - extraction metadata
    - input/result object URIs
 4. `tax-agent` uses those extraction artifacts locally
-5. `tax-agent` continues taxpayer interaction, audit, reconciliation, and local
-   PDF filling
+5. `tax-agent` continues taxpayer interaction, review, and local PDF filling
 
 ## Artifact Rules
 
@@ -167,6 +166,8 @@ For backend behavior, use:
 For local agent behavior in this repo, use:
 
 - [AGENTS.md](/home/appuser/tax/AGENTS.md)
+- [workspace/EXTRACTOR.md](/home/appuser/tax/workspace/EXTRACTOR.md)
+- [workspace/REVIEW.md](/home/appuser/tax/workspace/REVIEW.md)
 - [workspace/PDF_ROUTING.md](/home/appuser/tax/workspace/PDF_ROUTING.md)
 - [workspace/TAX_AUDIT_METHODOLOGY.md](/home/appuser/tax/workspace/TAX_AUDIT_METHODOLOGY.md)
 - [workspace/PDF_FILLING.md](/home/appuser/tax/workspace/PDF_FILLING.md)

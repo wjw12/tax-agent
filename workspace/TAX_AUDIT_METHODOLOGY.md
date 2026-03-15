@@ -19,9 +19,9 @@ brokerage summaries or 1099 cases.
 
 ---
 
-## Audit Role In The System
+## Review Sub-Agent In The System
 
-The audit agent sits after extraction and before PDF filling.
+The review sub-agent sits after extraction and before PDF filling.
 
 Its job is narrow:
 
@@ -110,7 +110,7 @@ The audit should test completeness, not just correctness. A mathematically
 correct return can still be incomplete if a source document listed in the
 source-set manifest never made it into the extracted payload set.
 
-At this stage, classify missing items into two buckets:
+At this point, classify missing items into two buckets:
 
 - `critical`: the return cannot be defended or materially changes without it
 - `non-critical`: the gap should be recorded, but the case can proceed if the
@@ -237,7 +237,7 @@ Examples of cross-form ties that should agree when applicable:
 - Schedule E net rental results into the return flow
 - estimated payments, withholding, and credits into total payments
 
-The exact line references are form-specific and model-specific. The audit agent
+The exact line references are form-specific and model-specific. The review
 does not need generic tax education here; it needs to verify that extracted
 payloads agree with each other and with the final filed flow.
 
@@ -388,8 +388,8 @@ reason.
 
 ## Reporting Contract
 
-Every audit result should produce concise outputs that the coordinator and
-downstream agents can use without replaying the whole investigation.
+Every review result should produce concise outputs that the coordinator and
+other sub-agents can use without replaying the whole investigation.
 
 Required outputs:
 

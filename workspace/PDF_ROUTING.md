@@ -221,8 +221,8 @@ This workflow separates ephemeral raw PDFs from durable extracted artifacts.
 - raw PDFs may exist only during the active user session
 - raw PDFs may be deleted when the user disconnects and the session lease ends
 - persisted extraction JSON under the case `source-sets/` folder is the
-  retained source of truth for downstream agent work
-- downstream agents should not require the original PDF once the retained
+  retained source of truth for later review and PDF filling work
+- other sub-agents should not require the original PDF once the retained
   extraction artifacts have been written successfully
 
 Recommended durable extraction layout:
@@ -315,7 +315,7 @@ Rules:
 - It should preserve router decisions and extractor outputs
 - It should be append-only per source set; do not silently rewrite prior source
   sets in place
-- It should include enough metadata for downstream audit sidecars to cite the
+- It should include enough metadata for later `.audit.json` sidecars to cite the
   correct source set and page
 
 ### Runtime extraction result
@@ -332,7 +332,7 @@ Every document-to-form step may use a runtime object with these fields:
 - `sources` — source references that tie output keys to file/page locations
 - `computations` — optional derived values computed in Python
 - `issues` — missing values, conflicts, unreadable pages, unresolved tax-rule questions
-- `form_payload` — final minimal JSON payload for the downstream form processor
+- `form_payload` — final minimal JSON payload for the later form processor
 
 ### Non-negotiable rule
 

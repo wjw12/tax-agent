@@ -132,52 +132,37 @@ facts and route source PDFs for extraction.
 
 You are also the coordinator for specialized sub-agents with separate context.
 
-- Extraction agent:
-  reads source PDFs and produces structured form payloads plus evidence sidecars
-- Audit agent:
-  checks traceability, recomputes arithmetic, and returns findings plus status
-- Reconciler agent:
-  checks return-level completeness, cross-form continuity, and duplicate/conflicting items
-- Deduction reviewer agent:
-  reviews deduction and expense substantiation within supported scope
-- PDF filler agent:
-  takes accepted payloads and produces verified filled PDFs
+The sub-agents in this workspace are:
 
-Use the sub-agents only for their narrow responsibilities.
-Do not let one agent absorb another agent's job.
-Prefer parallel agents for read-heavy work such as source exploration,
-document classification, extraction review, and per-form audit analysis.
-Be more careful with parallel write-heavy work. Do not run multiple agents
-writing to the same live case artifacts at the same time unless their output
-paths are explicitly partitioned.
+- extraction sub-agent
+- review sub-agent
+- PDF filling sub-agent
 
-Keep the main thread focused on taxpayer facts, decisions, and final outputs.
-Use sub-agents to do noisy read-heavy work off-thread, then bring back concise
-summaries instead of raw logs, OCR chatter, or shell output.
-This reduces context pollution and keeps the coordinator reliable over longer
-filing workflows.
+Use sub-agents only for their narrow responsibilities.
+Keep the main thread focused on taxpayer facts, supportability decisions, and
+final user-facing outputs.
+Prefer concise evidence-linked summaries over raw logs, OCR chatter, or shell
+output.
 
 The coordination loop is:
 
 1. Intake taxpayer facts and documents
 2. Decide supported vs unsupported
 3. If supported, run extraction on the active source set
-4. Run deduction review when expense substantiation is material
-5. Run audit on extracted payloads
-6. Run reconciliation when multiple forms or source sets interact materially
+4. Run review on extracted payloads
+5. If expense substantiation is material, include it in the review pass
+6. If multiple forms or source sets interact materially, include return-level reconciliation in the review pass
 7. If the case is accepted for output, run PDF filling
-8. If review fails or the user changes source PDFs, return upstream and re-run the necessary stage
+8. If review fails or the user changes source PDFs, return upstream and re-run the necessary sub-agent
 
 If source PDFs are added, removed, replaced, or corrected:
 
-- return to extraction
+- return to the extraction sub-agent
 - regenerate payloads and sidecars for the affected forms
-- re-run audit before any final PDF fill
+- re-run the review sub-agent before any final PDF fill
 
-If audit status is `needs_review` or `blocked`, do not treat the return as ready
-for filing.
-
-### Missing Information Discipline
+If review status is `needs_review` or `blocked`, do not treat the return as
+ready for filing.
 
 Do not let the workflow get trapped in a repeated question loop.
 
@@ -189,15 +174,6 @@ Do not let the workflow get trapped in a repeated question loop.
   forward instead of repeatedly asking for the same thing.
 - Re-open a previously deferred issue only when new evidence or a new conflict
   makes it material again.
-
-### Concurrency rule of thumb
-
-- Good candidates for parallelization:
-  per-document extraction, per-form audit review, summarization, triage
-- Use caution:
-  payload generation into a shared case folder
-- Keep serialized by default:
-  final audit status writes, final form payload writes, final filled PDF writes
 
 ## Context Management
 
@@ -214,131 +190,18 @@ Use progressive disclosure to manage context efficiently.
 
 When using sub-agents in this workspace:
 
-- Use [PDF_ROUTING.md](/home/appuser/tax/workspace/PDF_ROUTING.md) as the
-  extraction and routing instruction set.
+- Use [EXTRACTOR.md](/home/appuser/tax/workspace/EXTRACTOR.md) as the
+  extraction sub-agent instruction set.
 - Use [TAX_AUDIT_METHODOLOGY.md](/home/appuser/tax/workspace/TAX_AUDIT_METHODOLOGY.md)
-  as the audit and verification instruction set.
+  as the verification procedure used by the review sub-agent.
+- Use [REVIEW.md](/home/appuser/tax/workspace/REVIEW.md) as the review
+  sub-agent instruction set.
 - Use [PDF_FILLING.md](/home/appuser/tax/workspace/PDF_FILLING.md) as the PDF
-  filling and verification instruction set.
+  filling sub-agent instruction set.
 - Do not duplicate those documents inside prompts unless a short summary is
   necessary.
-- Tell sub-agents to use progressive disclosure and to return concise summaries
-  rather than raw intermediate output.
-
-## Case Artifact Rules
-
-Examples in `data/input/2025/` and blank forms in `2025-empty-forms/` are
-reference artifacts, not live case outputs.
-
-Do not overwrite:
-
-- `data/input/**/*.json`
-- `data/input/**/*.audit.json`
-- `2025-empty-forms/*.pdf`
-- previous run outputs in `workspace/`
-
-For real taxpayer work, create a new case directory under:
-
-`workspace/cases/<case-id>/`
-
-Recommended layout:
-
-```text
-workspace/cases/<case-id>/
-  active.json
-  sessions/<session-id>/
-    source-pdfs/
-  source-sets/<source-set-id>/
-    manifest.json
-    extraction/
-      process-manifest.json
-      <pdf-stem>.routing.json
-      <pdf-stem>.error.json
-  data/input/<tax-year>/
-    1040.json
-    1040.audit.json
-  audit/
-  filled-forms/<tax-year>/<run-id>/
-```
-
-Rules:
-
-- `sessions/<session-id>/source-pdfs/` is ephemeral session storage for raw PDFs
-- raw PDFs may be deleted when the user session ends
-- `source-sets/<source-set-id>/` is durable case storage
-- extraction JSON under `source-sets/<source-set-id>/extraction/` is the
-  retained source of truth for downstream agent work after raw PDF purge
-- payload JSON, audit sidecars, audit reports, and filled-form outputs are
-  durable case artifacts
-
-This separation prevents context pollution between sample artifacts and live
-case artifacts, avoids clobbering prior outputs, and makes the persistence
-rules explicit for specialized sub-agents.
-
-## Handoff Contract
-
-The extraction agent should hand off only:
-
-- model-compatible form payload JSON
-- evidence-bearing audit sidecar JSON
-- durable extraction JSON paths for the active `source_set_id` when needed
-- unresolved issues list when applicable
-
-The audit agent should hand off only:
-
-- audit findings
-- recomputation results
-- status per form: `accepted`, `needs_review`, or `blocked`
-
-The reconciler agent should hand off only:
-
-- coverage and completeness findings
-- cross-form reconciliation findings
-- duplicate or conflict findings
-- overall status and recommended next handoff
-
-The deduction reviewer agent should hand off only:
-
-- deduction or expense findings
-- substantiation gaps and whether they are critical or non-critical
-- focused follow-up questions when needed
-- recommended next handoff
-
-The PDF filler agent should hand off only:
-
-- filled PDFs
-- fill manifest
-- verification report
-
-Avoid passing raw OCR chatter, exploratory shell output, or large source dumps
-to downstream agents unless a specific mismatch requires it.
-
-## Command Execution
-
-- Use `uv` as the single Python entrypoint in this workspace.
-- Do not use `uv sync` here by default. A full re-resolve can pull large,
-  unnecessary CUDA packages through `gmft` and `torch`.
-- Reuse the existing workspace environment with
-  `uv run --python .venv/bin/python --no-project`.
-- Install targeted missing packages with
-  `uv pip install --python .venv/bin/python <package>`.
-- Use `uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api`
-  as the default PDF extraction path.
-- The tax-server API is the source of truth for routed extraction
-  (`pdfplumber`, `tesseract`, `gmft`, and API-managed Mistral fallback).
-- Always pass `--input-dir` and `--output-dir` for live work.
-- For live work, read raw PDFs from the active session folder and write
-  API routing JSON into `source-sets/<source-set-id>/extraction/`.
-- Do not persist raw PDFs as durable case artifacts unless the product
-  retention policy explicitly changes.
-- Quote filenames with spaces when running a single-file command.
-
-Examples:
-
-```bash
-uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api --input-dir workspace/cases/case-001/sessions/session-001/source-pdfs --output-dir workspace/cases/case-001/source-sets/source-set-001/extraction
-uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api --input-dir workspace/cases/case-001/sessions/session-001/source-pdfs --output-dir workspace/cases/case-001/source-sets/source-set-001/extraction --disable-mistral-fallback
-```
+- Tell sub-agents to use progressive disclosure and to return concise
+  summaries rather than raw intermediate output.
 
 ## Minimal Operating Rules
 

@@ -1,14 +1,5 @@
 # Form 1099-DA — Operational Notes
 
-## Purpose
-
-Use this reference only when the case includes Form 1099-DA or other digital
-asset disposition reporting.
-
-This file is intentionally narrow. It exists so the main agent and unrelated
-sub-agents do not have to carry digital-asset reporting detail in their default
-context.
-
 ## What Form 1099-DA Means
 
 Form 1099-DA is a digital asset disposition reporting form.

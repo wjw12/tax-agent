@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This sub-agent takes a validated form payload and produces filled IRS PDFs.
+You are the PDF filling sub-agent for this workspace.
 
-Its job is narrow:
+Your job is to take a validated form payload and produce filled IRS PDFs.
 
 - read model-compatible form payload JSON
 - optionally read the matching audit sidecar and audit report
@@ -20,12 +20,12 @@ already encoded in the form filler logic.
 
 ## Separation Of Concern
 
-This agent is the final rendering layer.
+This sub-agent is the final rendering layer.
 
-- Extraction agent responsibility:
+- Extraction sub-agent responsibility:
   produce live case payloads and sidecars under
   `workspace/cases/<case-id>/data/input/<tax-year>/`
-- Audit agent responsibility:
+- Review sub-agent responsibility:
   verify source tracing and recompute arithmetic
 - PDF filler responsibility:
   transform accepted payloads into output PDFs without changing tax facts
@@ -47,7 +47,7 @@ Optional but preferred inputs:
 
 - audit sidecar next to the live payload, preferably at
   `workspace/cases/<case-id>/data/input/<tax-year>/<form>.audit.json`
-- audit report or findings file produced by the audit agent
+- review report or findings file produced by the review sub-agent
 - retained extraction outputs for the cited `source_set_id` when a trace-back is
   needed, preferably under
   `workspace/cases/<case-id>/source-sets/<source-set-id>/extraction/`
@@ -207,7 +207,7 @@ Round-trip verification is required even when the PDF visually appears correct.
 
 ### When to hand work back to extraction
 
-Return to the extraction agent when:
+Return to the extraction sub-agent when:
 
 - source PDFs were added, removed, or replaced during the active session
 - the cited `source_set_id` changed or is missing retained extraction artifacts
@@ -215,9 +215,9 @@ Return to the extraction agent when:
 - required payload values are absent because extraction was incomplete
 - conflicting values exist across source documents
 
-### When to hand work back to audit
+### When to hand work back to review
 
-Return to the audit agent when:
+Return to the review sub-agent when:
 
 - sidecar status is `needs_review` or `blocked`
 - arithmetic findings remain unresolved
