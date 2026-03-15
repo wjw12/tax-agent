@@ -54,8 +54,8 @@ The system supports relatively straightforward individual returns, including:
 - NFT activity and other digital asset dispositions when records are available
 - Schedule C self-employment / freelancer income
 - basic Schedule E rental real estate
-- federal Form 1040 filing
-- straightforward federal Form 1040-NR filing for individuals
+- federal filing, including selected Form 1040-NR cases documented in
+  [FORM_1040_NR.md](/home/appuser/tax/workspace/FORM_1040_NR.md)
 - supported state filing
 
 The system does not support:
@@ -67,13 +67,6 @@ The system does not support:
 - any business with employees or payroll obligations
 - foreign businesses
 - foreign reporting such as FBAR/FATCA
-- dual-status alien returns
-- first-year choice elections
-- resident election cases involving a nonresident spouse
-- treaty-based return positions that require specialized disclosure or analysis,
-  including Form 8833 support
-- foreign partnership transfer cases that require Schedule P (Form 1040-NR)
-- estate or trust Form 1040-NR filings
 - advanced investment elections or advanced derivatives
 - real estate professional status, cost segregation, 1031 exchanges, or other advanced rental treatment
 - unsupported states or major multi-state complexity
@@ -120,16 +113,11 @@ Use the answers to branch immediately:
 - If the taxpayer is a U.S. citizen or resident alien for 2025, continue on the
   Form 1040 path.
 - If the taxpayer is a nonresident alien for 2025, continue on the Form 1040-NR
-  path and load [FORM_1040_NR.md](/home/appuser/tax/workspace/FORM_1040_NR.md).
+  path and use [FORM_1040_NR.md](/home/appuser/tax/workspace/FORM_1040_NR.md)
+  as the source of truth for scope, questions, and 2025-specific rules.
 - If the taxpayer is dual-status, is considering a resident election, or cannot
   explain their residency facts well enough to determine the correct path,
   treat the case as unsupported until clarified.
-
-When the taxpayer is married, always establish:
-
-- whether the spouse had any U.S. tax residency during 2025
-- whether the taxpayer wants or needs a joint-style resident election
-- whether the spouse has an SSN or ITIN
 
 When the taxpayer may need state filing, establish before extraction:
 
@@ -263,11 +251,9 @@ workspace/cases/<case-id>/
   source-sets/<source-set-id>/
     manifest.json
     extraction/
-      router.json
-      extracted_raw.json
-      tesseract.json
-      mistral.json
-      normalized-pages.json
+      process-manifest.json
+      <pdf-stem>.routing.json
+      <pdf-stem>.error.json
   data/input/<tax-year>/
     1040.json
     1040.audit.json
@@ -336,15 +322,13 @@ to downstream agents unless a specific mismatch requires it.
   `uv run --python .venv/bin/python --no-project`.
 - Install targeted missing packages with
   `uv pip install --python .venv/bin/python <package>`.
-- Use `uv run --python .venv/bin/python --no-project extract_pdfs.py` for raw
-  text extraction.
-- Use `uv run --python .venv/bin/python --no-project ocr_extract.py` for
-  OCR/table extraction.
-- Use `uv run --python .venv/bin/python --no-project ./mistral_ocr.py` for
-  Mistral OCR.
+- Use `uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api`
+  as the default PDF extraction path.
+- The tax-server API is the source of truth for routed extraction
+  (`pdfplumber`, `tesseract`, `gmft`, and API-managed Mistral fallback).
 - Always pass `--input-dir` and `--output-dir` for live work.
 - For live work, read raw PDFs from the active session folder and write
-  extraction JSON into `source-sets/<source-set-id>/extraction/`.
+  API routing JSON into `source-sets/<source-set-id>/extraction/`.
 - Do not persist raw PDFs as durable case artifacts unless the product
   retention policy explicitly changes.
 - Quote filenames with spaces when running a single-file command.
@@ -352,10 +336,8 @@ to downstream agents unless a specific mismatch requires it.
 Examples:
 
 ```bash
-uv pip install --python .venv/bin/python google-auth
-uv run --python .venv/bin/python --no-project extract_pdfs.py --input-dir workspace/cases/case-001/sessions/session-001/source-pdfs --output-dir workspace/cases/case-001/source-sets/source-set-001/extraction
-uv run --python .venv/bin/python --no-project ocr_extract.py --input-dir workspace/cases/case-001/sessions/session-001/source-pdfs --output-dir workspace/cases/case-001/source-sets/source-set-001/extraction
-uv run --python .venv/bin/python --no-project ./mistral_ocr.py --input-dir workspace/cases/case-001/sessions/session-001/source-pdfs --output-dir workspace/cases/case-001/source-sets/source-set-001/extraction --no-compare
+uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api --input-dir workspace/cases/case-001/sessions/session-001/source-pdfs --output-dir workspace/cases/case-001/source-sets/source-set-001/extraction
+uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api --input-dir workspace/cases/case-001/sessions/session-001/source-pdfs --output-dir workspace/cases/case-001/source-sets/source-set-001/extraction --disable-mistral-fallback
 ```
 
 ## Minimal Operating Rules

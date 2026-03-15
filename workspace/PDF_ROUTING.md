@@ -13,8 +13,8 @@ classifies each page before handing it to the right extractor.
 | Class | Description | Extractor |
 |---|---|---|
 | **digital-text** | Native text layer, clean encoding | pdfplumber |
-| **garbled-text** | Native text layer, broken font encoding | Tesseract OCR, then Mistral OCR if validation fails |
-| **image-scan** | Page is a raster image, no text layer | Tesseract OCR, then Mistral OCR if validation fails |
+| **garbled-text** | Native text layer, broken font encoding | Tesseract OCR, then server-managed Mistral fallback if validation fails |
+| **image-scan** | Page is a raster image, no text layer | Tesseract OCR, then server-managed Mistral fallback if validation fails |
 | **table-heavy** | Structured grid data dominates the page | GMFT + pdfplumber |
 
 Handwriting is excluded from scope: IRS tax documents are never handwritten at
@@ -108,7 +108,7 @@ extract text layer (pdfplumber)
 | Page parsing baseline | `pdfplumber` | Fast, no dependencies, exact text layer |
 | Garble detection | Heuristics on pdfplumber output | Zero overhead, no extra library |
 | Raster OCR | `tesseract` via `pytesseract` + `pdf2image` | Reliable, outperformed PaddleOCR on these docs |
-| AI OCR fallback | `mistral-ocr-2505` on Vertex AI | Better fallback than PaddleOCR for complex layouts and image-like tax pages |
+| AI OCR fallback | tax-server managed Mistral fallback | Better fallback than PaddleOCR for complex layouts and image-like tax pages |
 | Financial table extraction | `gmft` (AutoTableDetector + AutoTableFormatter) | Best structured output for broker statements |
 | Image presence check | `pdfplumber` `.images` attribute | Already loaded, no extra cost |
 
@@ -118,97 +118,46 @@ PaddleOCR was the least reliable on garbled-font pages and adds heavy
 dependency constraints (PaddlePaddle, numpy<2, oneDNN CPU compatibility
 issues).
 
-**Mistral OCR is not the default extractor.** Use it selectively as a fallback
-when local extraction fails validation, not in place of `pdfplumber` on clean
-digital PDFs. Native text extraction is still more exact on Fidelity, Moomoo,
-and Morgan Stanley statements.
+**Mistral OCR is not the default extractor.** Use the tax-server API as the
+default extraction path and let it decide when to apply OCR, table extraction,
+and any server-managed fallback. Native text extraction is still more exact on
+Fidelity, Moomoo, and Morgan Stanley statements.
 
 ---
 
-## Mistral OCR Usage
+## API Processing
 
-Use the dedicated OCR model:
+Use the shared tax-server API for live work:
 
 ```bash
-export GCP_PROJECT_ID=your-project-id
-export GCP_LOCATION=us-central1
-export MISTRAL_MODEL=mistral-ocr-2505
+uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api \
+  --input-dir /home/appuser/tax/workspace/cases/case-001/sessions/session-001/source-pdfs \
+  --output-dir /home/appuser/tax/workspace/cases/case-001/source-sets/source-set-001/extraction
 ```
 
-Local helper script:
+Disable the server-managed Mistral fallback only when you need a stricter
+baseline comparison:
 
 ```bash
-uv run /home/appuser/tax/mistral_ocr.py \
+uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api \
   --input-dir /home/appuser/tax/workspace/cases/case-001/sessions/session-001/source-pdfs \
   --output-dir /home/appuser/tax/workspace/cases/case-001/source-sets/source-set-001/extraction \
-  --no-compare
-```
-
-Minimal Vertex AI request shape:
-
-```python
-import base64
-import json
-from pathlib import Path
-
-import google.auth
-from google.auth.transport.requests import Request
-import requests
-
-project_id = "your-project-id"
-region = "us-central1"
-model = "mistral-ocr-2505"
-pdf_path = Path("/path/to/file.pdf")
-
-creds, _ = google.auth.default(
-    scopes=["https://www.googleapis.com/auth/cloud-platform"]
-)
-creds.refresh(Request())
-
-pdf_b64 = base64.b64encode(pdf_path.read_bytes()).decode("utf-8")
-url = (
-    f"https://{region}-aiplatform.googleapis.com/v1/projects/{project_id}"
-    f"/locations/{region}/publishers/mistralai/models/{model}:rawPredict"
-)
-payload = {
-    "model": model,
-    "document": {
-        "type": "document_url",
-        "document_url": f"data:application/pdf;base64,{pdf_b64}",
-    },
-    "include_image_base64": False,
-}
-resp = requests.post(
-    url,
-    headers={
-        "Authorization": f"Bearer {creds.token}",
-        "Content-Type": "application/json",
-    },
-    json=payload,
-    timeout=120,
-)
-resp.raise_for_status()
-data = resp.json()
-
-for page in data.get("pages", []):
-    page_num = page["index"] + 1
-    text = page.get("markdown", "")
-    print(page_num, text[:500])
+  --disable-mistral-fallback
 ```
 
 Expected response contract:
 
-- Per-page OCR is returned under `pages`.
-- Page text is in `pages[i]["markdown"]`.
-- Page numbers are zero-based in `pages[i]["index"]`.
-- Usage metadata is returned in `usage_info`.
+- Per-file routing and extraction JSON is written to `<pdf-stem>.routing.json`.
+- A batch manifest is written to `process-manifest.json`.
+- The server returns page results inline and stores durable object URIs for
+  uploaded inputs and routing outputs.
 
 Agent rule of thumb:
 
 - Use `pdfplumber` first when text is already extractable.
 - Use `tesseract` first for garbled-text and image-scan pages.
-- Escalate to Mistral OCR only when key fields are missing, reading order is
-  broken, or local OCR disagreement is high.
+- Escalate to the server-managed Mistral fallback only when key fields are
+  missing, reading order is broken, or local OCR disagreement is high.
 
 ---
 
@@ -227,9 +176,9 @@ Agent rule of thumb:
   currently one file (Discover 1099-INT page 1) and partial pages on the
   Coinbase 1099-DA.
 
-- **Mistral OCR is more expensive than local OCR.** It requires Vertex AI
-  credentials, network access, and per-page billing. Use it after local OCR
-  fails validation rather than as the default first pass.
+- **Server-managed Mistral fallback is more expensive than local OCR.** It adds
+  network and per-page model cost. Use it after baseline extraction fails
+  validation rather than as the default first pass.
 
 - **Validation gates matter more than model choice.** For 1099s and W-2s,
   always check for payer TIN, masked recipient TIN, account number, tax year,
@@ -283,11 +232,9 @@ workspace/cases/<case-id>/
   source-sets/<source-set-id>/
     manifest.json
     extraction/
-      router.json
-      extracted_raw.json
-      tesseract.json
-      mistral.json
-      normalized-pages.json
+      process-manifest.json
+      <pdf-stem>.routing.json
+      <pdf-stem>.error.json
 ```
 
 `manifest.json` should include at least:
@@ -311,7 +258,7 @@ The agent may decide autonomously how to handle a source PDF:
 
 - run Python scripts
 - run shell commands
-- use `pdfplumber`, Tesseract, GMFT, or Mistral OCR
+- use the tax-server API and its routed extraction stack
 - retry with a different extractor when validation fails
 
 **Do not require a rigid input schema for the source PDFs.** The folder can

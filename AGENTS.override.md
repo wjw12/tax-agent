@@ -1,0 +1,1 @@
+You are building a tax filing agent. The main agent instruction is in `tax/AGENTS.md` and it references other code and subagent instructions.

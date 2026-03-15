@@ -5,7 +5,7 @@ filling for tax returns.
 
 ## Included
 
-- extraction helpers: `extract_pdfs.py`, `ocr_extract.py`, `mistral_ocr.py`
+- PDF/API integration and extraction helpers in `src/`
 - form models, processors, mappings, and fill logic in `src/`
 - team maintenance commands in `scripts/`
 - workflow docs in `AGENTS.md`, `workspace/`, and `API_SERVER_HANDOFF.md`
@@ -39,25 +39,10 @@ Use the existing workspace environment pattern from `AGENTS.md`:
 uv run --python .venv/bin/python --no-project ...
 ```
 
-## Tax Server Smoke Test
-
-The repo includes a live integration smoke test for the running `tax-server`:
+Default batch PDF processing now lives in:
 
 ```bash
-TAX_SERVER_API_KEY=REPLACE_ME \
-uv run --python .venv/bin/python --no-project scripts/smoke_test_tax_server.py
-```
-
-By default it:
-
-- calls `GET /health`
-- calls `POST /v1/auth/inspect`
-- uploads `2025-empty-forms/f1040.pdf` to `POST /v1/pdf/process`
-
-Override the endpoint or PDF if needed:
-
-```bash
-uv run --python .venv/bin/python --no-project scripts/smoke_test_tax_server.py \
-  --base-url http://34.10.4.155:8010 \
-  --pdf 2025-empty-forms/f1040nr.pdf
+uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api \
+  --input-dir workspace/cases/case-001/sessions/session-001/source-pdfs \
+  --output-dir workspace/cases/case-001/source-sets/source-set-001/extraction
 ```

@@ -81,8 +81,8 @@ class TaxServerClient:
         self,
         pdf_path: str | Path,
         *,
-        case_id: str = "smoke-test",
-        use_mistral_fallback: bool = False,
+        case_id: str = "pdf-process",
+        use_mistral_fallback: bool = True,
     ) -> dict[str, Any]:
         upload_path = Path(pdf_path)
         with upload_path.open("rb") as handle:

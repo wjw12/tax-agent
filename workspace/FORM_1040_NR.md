@@ -3,6 +3,10 @@
 Use this guide when the taxpayer is a nonresident alien for 2025 or when that
 status is still being determined.
 
+This file is the source of truth for nonresident-return scope, intake
+questions, and 2025-specific rules. Do not rely on general model memory for
+`1040-NR` details when this file applies.
+
 ## Supported 2025 Scope
 
 The current 2025 Form 1040-NR path is intended for straightforward individual
@@ -17,6 +21,15 @@ Supported:
   Schedule 1-A (Form 1040) when they fit the supported scope
 - standard deduction only when it is actually available, such as the limited
   cases allowed by the instructions
+
+Important 2025 note:
+
+- `Schedule 1-A (Form 1040)` is new for 2025.
+- The 2025 `1040-NR` instructions explicitly direct `Form 1040-NR` line `13c`
+  to `Schedule 1-A`, line `38`.
+- Do not rely on model memory for the 2025 `Schedule 1-A` deduction rules.
+  Treat the repo code and instructions as the source of truth for the new
+  tips, overtime, car-loan-interest, and senior-deduction flow.
 
 Unsupported:
 
@@ -42,6 +55,7 @@ documents:
    Ask:
    - Are you single, married, or a qualifying surviving spouse for 2025?
    - If married, did your spouse have U.S. tax residency, and are you trying to make any election to file as residents?
+   - If married, does your spouse have an SSN or ITIN?
 
 3. Collect identifying and residency facts.
    Ask:
