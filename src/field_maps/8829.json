@@ -1,12 +1,5 @@
 {
   "pdf_filename": "f8829.pdf",
-  "mapped_text_fields": {
-    "f1_09[0]": "15",
-    "f1_38[0]": "400",
-    "f1_40[0]": "3150",
-    "f1_49[0]": "3500",
-    "f1_51[0]": "50"
-  },
   "mapped_checkbox_fields": {},
   "unmapped_keys": [],
   "ignored_keys": [],

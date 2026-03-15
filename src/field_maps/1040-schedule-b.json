@@ -1,9 +1,5 @@
 {
   "pdf_filename": "f1040sb.pdf",
-  "mapped_text_fields": {
-    "f1_31[0]": "350",
-    "f1_64[0]": "900"
-  },
   "mapped_checkbox_fields": {},
   "unmapped_keys": [],
   "ignored_keys": [

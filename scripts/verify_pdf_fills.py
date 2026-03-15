@@ -112,7 +112,6 @@ def main() -> int:
 
         report[form_code] = {
             "pdf_filename": definition.pdf_filename,
-            "mapped_text_count": len(mapping.mapped_text_fields),
             "mapped_checkbox_count": len(mapping.mapped_checkbox_fields),
             "ignored_key_count": len(mapping.ignored_keys),
             "unmapped_keys": mapping.unmapped_keys,

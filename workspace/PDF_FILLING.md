@@ -155,7 +155,6 @@ The manifest should include:
 The verification report should include, per form:
 
 - `status`
-- `mapped_text_count`
 - `mapped_checkbox_count`
 - `unmapped_keys`
 - `mismatches`

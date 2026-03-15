@@ -1,9 +1,5 @@
 {
   "pdf_filename": "f8949.pdf",
-  "mapped_text_fields": {
-    "f1_95[0]": "-300",
-    "f2_95[0]": "2200"
-  },
   "mapped_checkbox_fields": {},
   "unmapped_keys": [],
   "ignored_keys": [

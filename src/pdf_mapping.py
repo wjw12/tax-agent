@@ -748,7 +748,6 @@ def write_field_map_snapshot(form_code: str, mapping: PdfFieldMapping) -> Path:
     output_path = FIELD_MAP_DIR / f"{form_code.lower().replace('/', '_')}.json"
     payload = {
         "pdf_filename": mapping.pdf_filename,
-        "mapped_text_fields": mapping.mapped_text_fields,
         "mapped_checkbox_fields": {
             key: {"field": field_name, "on_value": on_value}
             for key, (field_name, on_value) in mapping.mapped_checkbox_fields.items()

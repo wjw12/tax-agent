@@ -1,13 +1,5 @@
 {
   "pdf_filename": "f2441.pdf",
-  "mapped_text_fields": {
-    "f1_27[0]": "5400",
-    "f1_32[0]": "3000",
-    "f1_33[0]": "0",
-    "f1_37[0]": "3000",
-    "f2_1[0]": "20",
-    "f2_3[0]": "600"
-  },
   "mapped_checkbox_fields": {},
   "unmapped_keys": [],
   "ignored_keys": [

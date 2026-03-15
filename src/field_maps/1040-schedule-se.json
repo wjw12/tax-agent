@@ -1,11 +1,5 @@
 {
   "pdf_filename": "f1040sse.pdf",
-  "mapped_text_fields": {
-    "f1_5[0]": "37900",
-    "f1_9[0]": "35001",
-    "f1_21[0]": "5355",
-    "f1_22[0]": "2678"
-  },
   "mapped_checkbox_fields": {},
   "unmapped_keys": [],
   "ignored_keys": [],
