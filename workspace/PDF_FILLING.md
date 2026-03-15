@@ -60,9 +60,22 @@ Code paths to use:
 - `src/models.py`
 - `src/pdf_fillers.py`
 - `src/pdf_mapping.py`
+- `src/field_metadata.py`
+- `src/qbi.py`
 
 Treat those modules as the executable contract for how form values are built and
 written.
+
+Before filling, verify that `computed_input` and `cross_form` fields in the
+payload are populated correctly by consulting `src/field_metadata.py`. If a
+`computed_input` field (e.g., `tax_before_credits`) is `0` when the upstream
+taxable income is positive, stop and hand the work back upstream rather than
+rendering an incorrect PDF.
+
+If the payload includes `Form 8995` or `Form 8995-A`, verify it with
+`src.qbi.validate_qbi_form_input_2025(...)` before filling. Do not render a QBI
+PDF when TY2025 form selection, taxable-income-before-QBI, or QBI business
+entries fail executable validation.
 
 ---
 

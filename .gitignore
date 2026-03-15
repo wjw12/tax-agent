@@ -37,3 +37,5 @@ tmp/
 
 # Local lockfile without project metadata
 /uv.lock
+
+settings.json

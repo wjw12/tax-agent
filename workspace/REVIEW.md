@@ -90,8 +90,11 @@ one mode when the case requires it.
 - use progressive disclosure; read only the payloads, sidecars, source pages,
   summaries, and supplements needed for the issue being reviewed
 - use decimal-safe arithmetic for money
-- MUST treat `src/registry.py` and `src/processors.py` as the executable
-  source of truth for registered forms
+- MUST treat `src/registry.py`, `src/processors.py`,
+  `src/field_metadata.py`, and `src/qbi.py` as the executable source of truth
+  for registered forms
+- MUST use `src/field_metadata.py` for cross-form validation; see the
+  **Cross-Form Validation Using Field Metadata** section below
 - be conservative near boundary cases
 - write review outputs only into the active case folder
 - return concise findings and evidence-linked summaries, not raw logs or long
@@ -106,6 +109,69 @@ one mode when the case requires it.
   by the model contract
 - NEVER replace a required sidecar contract with ad hoc prose, custom keys, or
   a freeform summary file
+
+## Cross-Form Validation Using Field Metadata
+
+`src/field_metadata.py` provides the authoritative inter-form wiring map. Use
+it during both form-level audit and return-level reconciliation.
+
+### Form-Level Audit
+
+For each payload under review:
+
+1. Load the payload and run the registered processor to recompute derived
+   values. Compare recomputed values against the saved payload.
+2. Call `get_fields_by_role(form_code, FieldRole.CROSS_FORM)` to find every
+   field that should have been wired from another form.
+3. For each `cross_form` field, verify that the payload value matches the
+   producing form's processor output at the referenced line
+   (`cross_form_ref.source_form`, `cross_form_ref.source_line`).
+4. Call `get_fields_by_role(form_code, FieldRole.COMPUTED_INPUT)` to find
+   fields the agent was required to compute. Verify these are nonzero when the
+   underlying taxable income or other base is nonzero. Read the `notes` for
+   specific validation guidance.
+5. Verify that the audit sidecar's values agree with the payload values. A
+   sidecar that claims one value while the payload stores a different value is
+   a contract failure.
+
+### Return-Level Reconciliation
+
+When reviewing a complete set of forms:
+
+```python
+from src.field_metadata import get_wires_for_target, FORM_WIRES
+
+# For each form in the return, check all incoming wires
+for wire in get_wires_for_target("1040"):
+    expected = results[wire.source_form].get_line(wire.source_line)
+    actual = payload_1040[wire.target_field]
+    if expected != actual:
+        flag_mismatch(wire, expected, actual)
+```
+
+### Common Findings This Catches
+
+- `1040.other_taxes` set to Schedule SE line `13` (deductible half) instead of
+  line `12` (full SE tax). The field metadata notes explicitly warn about this.
+- `1040.tax_before_credits` left at `0` when taxable income is positive. The
+  field metadata classifies this as `computed_input` and notes that the
+  processor does not compute it.
+- `1040.schedule_1_additional_income` that does not match Schedule 1 line `10`.
+- Audit sidecar values that contradict the saved payload.
+- Forms processed out of dependency order, causing stale cross-form values.
+
+## QBI Review Rules
+
+When the return includes `Form 8995`, `Form 8995-A`, or any QBI deduction:
+
+1. Use `src.qbi.validate_qbi_form_input_2025(...)` to validate the saved QBI
+   payload against upstream forms.
+2. Verify TY2025 form selection: `Form 8995` only when taxable income before
+   the QBI deduction is at or below `$394,600` for `married_filing_jointly` or
+   `$197,300` for all other returns; otherwise `Form 8995-A`.
+3. Verify QBI excludes any amount deducted under IRC `224` for qualified tips.
+4. Fail review if `businesses`, `taxable_income_before_qbi`, or the final QBI
+   deduction disagrees with executable recomputation.
 
 ## Case Artifact Rules
 

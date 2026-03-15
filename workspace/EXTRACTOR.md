@@ -31,7 +31,13 @@ Conditional supplements:
 - prefer deterministic extraction before OCR or model-based extraction
 - keep output minimal and model-compatible
 - MUST follow the EXECUTABLE CONTRACT in `src/models.py`, `src/registry.py`,
-  `src/processors.py`, and `workspace/PDF_ROUTING.md`
+  `src/processors.py`, `src/field_metadata.py`, `src/qbi.py`, and
+  `workspace/PDF_ROUTING.md`
+- MUST consult `src/field_metadata.py` before constructing any form payload;
+  see the detailed rules in `AGENTS.md` under **Field Metadata And Inter-Form
+  Wiring**
+- MUST use `src/qbi.py` when the active case includes `Form 8995`,
+  `Form 8995-A`, or QBI analysis
 - write only into the active case folder under `workspace/cases/<case-id>/`
 - never overwrite sample files under `data/input/2025/` or blank forms
 - do not fill IRS PDFs
@@ -52,6 +58,47 @@ Conditional supplements:
   them from accepted source values
 - NEVER add unofficial payload keys that are not declared by the registered
   Pydantic model
+
+## Field Metadata Usage During Extraction
+
+When building form payloads from extracted data, use `src/field_metadata.py` to
+determine how each field should be populated:
+
+1. Call `get_build_order(forms_needed)` to determine the correct processing
+   sequence for the forms in the active source set.
+2. For each form, check `get_fields_by_role(form_code, FieldRole.CROSS_FORM)`
+   to identify fields that must be wired from previously processed forms.
+   Use `cross_form_ref.source_form` and `cross_form_ref.source_line` to look
+   up the correct value from the producing processor's output.
+3. For each form, check `get_fields_by_role(form_code, FieldRole.COMPUTED_INPUT)`
+   to identify fields the processor does NOT compute. Read the `notes` on each
+   field for computation guidance. Do not leave these at `0` when the underlying
+   value is nonzero.
+4. For `source` fields, populate from extraction artifacts.
+5. For `taxpayer_fact` fields, populate from intake facts.
+
+Common pitfalls this prevents:
+
+- Setting `1040.other_taxes` to the deductible half of SE tax instead of the
+  full SE tax. The field metadata notes explicitly warn about this.
+- Leaving `1040.tax_before_credits` at `0`. The field metadata notes explain
+  that the processor does not compute income tax from tax tables.
+- Processing forms in the wrong order and missing cross-form dependencies.
+
+## QBI Extraction Rules
+
+When the source set includes `Form 8995`, `Form 8995-A`, `Schedule C`, or
+another QBI issue:
+
+1. Use `src.qbi.build_qbi_form_input_2025(...)` or
+   `src.qbi.build_qbi_business_assembly_from_forms(...)` to assemble QBI
+   payload inputs.
+2. For TY2025, select `Form 8995` only when taxable income before the QBI
+   deduction is at or below `$394,600` for `married_filing_jointly` or
+   `$197,300` for all other returns. Otherwise use `Form 8995-A`.
+3. Exclude amounts deducted under IRC `224` for qualified tips from QBI.
+4. Do not hand-author `businesses` or `taxable_income_before_qbi` without the
+   executable QBI helper path.
 
 ## Case Artifact Rules
 

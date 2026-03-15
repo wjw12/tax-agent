@@ -195,8 +195,8 @@ ready for filing.
 
 For ANY live case written under `workspace/cases/<case-id>/`, the EXECUTABLE
 CONTRACT in `workspace/PDF_ROUTING.md`, `src/models.py`, `src/registry.py`,
-`src/processors.py`, `src/pdf_fillers.py`, and `src/pdf_mapping.py` MUST be
-followed.
+`src/processors.py`, `src/pdf_fillers.py`, `src/pdf_mapping.py`, and
+`src/field_metadata.py`, and `src/qbi.py` MUST be followed.
 
 NON-NEGOTIABLE RULES:
 
@@ -208,6 +208,11 @@ NON-NEGOTIABLE RULES:
   present, even when the value is `0`, `null`, `false`, or `[]`.
 - MUST keep audit metadata in the `.audit.json` sidecar, not in the form
   payload root.
+- MUST consult `src/field_metadata.py` before constructing any form payload.
+  See the **Field Metadata And Inter-Form Wiring** section below.
+- MUST use `src/qbi.py` when the case includes `Form 8995`, `Form 8995-A`, or
+  any QBI analysis. See the **QBI Workflow (Form 8995 / 8995-A)** section
+  below.
 - NEVER invent numeric tax values that cannot be traced to source evidence or a
   reproducible Python computation trace.
 - NEVER hand-author derived totals when the registered processor already knows
@@ -216,6 +221,135 @@ NON-NEGOTIABLE RULES:
   sidecar fields are missing, or recomputation disagrees with the saved payload.
 - NEVER override a failed PDF verification result with a heuristic note. If
   read-back mismatches exist, STOP and return the case upstream.
+
+## Field Metadata And Inter-Form Wiring
+
+`src/field_metadata.py` is the authoritative reference for how every input
+model field should be populated and how values flow between forms. It contains
+two layers that agents MUST use during payload construction and review.
+
+### Layer 1 — Field Classification
+
+Every field on every form model is classified by its **role**:
+
+| Role | Meaning | Agent action |
+|---|---|---|
+| `form_identity` | `form_code`, `tax_year` | Set mechanically. |
+| `taxpayer_fact` | Filing status, SSN, address, etc. | Populate from intake. |
+| `source` | Extracted from taxpayer documents. | Populate from extraction artifacts. |
+| `cross_form` | Must come from another form's processor output. | Look up `cross_form_ref` for the source form and line, run that processor first, and use its output. |
+| `computed_input` | The processor does NOT derive this; the agent must compute it before passing it in. | Read the `notes` field carefully. Compute the value yourself (e.g., income tax from tax tables). |
+| `derived` | The processor computes this from other inputs. | Do not set manually; the processor will compute it. |
+
+#### How to use Layer 1
+
+Before constructing any payload:
+
+```python
+from src.field_metadata import get_fields_by_role, get_field_meta, FieldRole
+
+# Check which fields need cross-form values
+cross_form = get_fields_by_role("1040", FieldRole.CROSS_FORM)
+for name, meta in cross_form.items():
+    ref = meta.cross_form_ref
+    print(f"{name} <- {ref.source_form} line {ref.source_line}")
+
+# Check which fields the agent must compute
+computed = get_fields_by_role("1040", FieldRole.COMPUTED_INPUT)
+for name, meta in computed.items():
+    print(f"{name}: {meta.notes}")
+
+# Get full description of a single field
+from src.field_metadata import describe_field
+print(describe_field("1040", "other_taxes"))
+```
+
+#### Critical fields with known agent pitfalls
+
+- `1040.tax_before_credits` — role is `computed_input`. The 1040 processor
+  does NOT compute income tax from tax tables. The agent MUST compute it from
+  the 2025 brackets using taxable income (line 15). Leaving this at `0` when
+  taxable income is positive will produce an incorrect return.
+- `1040.other_taxes` — role is `cross_form`, source is Schedule SE line `12`
+  (or Schedule 2 line `21`). This is the **full** self-employment tax, NOT the
+  deductible half (line `13`). Using the deductible half here is a common error.
+
+## QBI Workflow (Form 8995 / 8995-A)
+
+When the case includes `Form 8995`, `Form 8995-A`, or any QBI deduction issue,
+`src/qbi.py` is the executable source of truth for:
+
+- TY2025 form selection between `8995` and `8995-A`
+- `taxable_income_before_qbi`
+- business-entry assembly for QBI inputs
+- validation of saved QBI payloads against upstream forms
+
+Required workflow:
+
+1. Use `src.field_metadata.py` to identify that the QBI fields are
+   `computed_input`.
+2. Use `src.qbi.build_qbi_form_input_2025(...)` or the lower-level
+   `src.qbi.build_qbi_business_assembly_from_forms(...)` helpers to assemble
+   the QBI payload.
+3. DO NOT hand-author `8995.businesses`, `8995-A.businesses`, or
+   `taxable_income_before_qbi` from prose reasoning alone.
+4. For TY2025, use `Form 8995` only when taxable income before the QBI
+   deduction is at or below `$394,600` for `married_filing_jointly` or
+   `$197,300` for all other returns. Otherwise use `Form 8995-A`.
+5. Exclude any amount deducted under IRC `224` for qualified tips from QBI.
+6. During review, validate saved QBI payloads with
+   `src.qbi.validate_qbi_form_input_2025(...)`.
+
+### Layer 2 — Inter-Form Wiring And Build Order
+
+`src/field_metadata.py` declares every output-line-to-input-field connection
+between forms as `FormWire` objects. It also provides dependency graph utilities
+to determine the correct processing order.
+
+#### How to use Layer 2
+
+Before building payloads for a case, determine the correct build order:
+
+```python
+from src.field_metadata import get_build_order, get_wires_for_target
+
+# Determine processing order for the forms in this case
+forms_needed = ["1040-Schedule-C", "1040-Schedule-SE",
+                "1040-Schedule-1", "8995", "1040"]
+order = get_build_order(forms_needed)
+# -> ['1040-Schedule-C', '1040-Schedule-SE', '1040-Schedule-1', '8995', '1040']
+
+# Check what feeds into the 1040
+for wire in get_wires_for_target("1040"):
+    print(f"{wire.target_field} <- {wire.source_form} line {wire.source_line}")
+```
+
+#### Required workflow for multi-form payload construction
+
+1. Identify the forms needed for the case.
+2. Call `get_build_order(forms_needed)` to determine processing order.
+3. Process forms in that order. For each form:
+   a. Check `get_fields_by_role(form_code, FieldRole.CROSS_FORM)` to find
+      fields that must come from previously processed forms.
+   b. Look up each `cross_form_ref` and use `result.get_line(source_line)` on
+      the referenced form's processor output.
+   c. Check `get_fields_by_role(form_code, FieldRole.COMPUTED_INPUT)` for
+      fields the agent must compute (not the processor).
+   d. Read the `notes` on each `computed_input` field for computation guidance.
+   e. Build the payload, run the processor, and store the result.
+4. After all payloads are built, verify that every `cross_form` field matches
+   its source processor output. A mismatch is a contract failure.
+
+#### Wire semantics
+
+Some wires target list fields (`target_is_list_item=True`). This means the
+source value becomes one item in a list (e.g., Schedule C net profit becomes
+one entry in Schedule 1's `additional_income_items`). The wire's
+`item_description` provides the text for the list entry.
+
+Some wires are annotated as soft AGI dependencies. These document data origin
+but do not create hard ordering constraints because AGI can be computed from
+the same upstream sources without waiting for the full 1040 processor to run.
 
 Do not let the workflow get trapped in a repeated question loop.
 
