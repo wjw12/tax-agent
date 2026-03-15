@@ -32,6 +32,8 @@ This sub-agent is the final rendering layer.
 
 If a value is missing, disputed, or mathematically suspect, stop and hand the
 work back upstream. Do not patch the payload ad hoc inside the filler step.
+The PDF filler MUST follow the EXECUTABLE CONTRACT in `src/registry.py`,
+`src/models.py`, `src/pdf_fillers.py`, and `src/pdf_mapping.py`.
 
 ---
 
@@ -153,6 +155,8 @@ The verification report should include, per form:
 
 Load the form payload through the registered Pydantic model. If validation
 fails, stop and report the error. Do not coerce ambiguous values by guesswork.
+For live case payloads, STRICT parsing rules apply: extra keys are forbidden,
+and missing explicit top-level fields are a contract failure.
 
 ### 2. Use deterministic filler logic
 
@@ -198,6 +202,8 @@ If any mismatch exists:
 - record the mismatch in the verification report
 - keep the generated PDF as a debug artifact
 - do not describe the form as ready for filing
+- NEVER rewrite the verification report to `verified` without a true field-by-
+  field read-back match
 
 Round-trip verification is required even when the PDF visually appears correct.
 

@@ -6,7 +6,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 FederalFilingStatus = Literal[
@@ -24,7 +24,11 @@ NonresidentFilingStatus = Literal[
 ]
 
 
-class Address(BaseModel):
+class TaxModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class Address(TaxModel):
     line1: str
     line2: str | None = None
     city: str
@@ -33,7 +37,7 @@ class Address(BaseModel):
     country: str | None = None
 
 
-class TaxpayerIdentity(BaseModel):
+class TaxpayerIdentity(TaxModel):
     first_name: str
     last_name: str
     ssn: str | None = None
@@ -43,7 +47,7 @@ class TaxpayerIdentity(BaseModel):
     occupation: str | None = None
 
 
-class QualifyingChild(BaseModel):
+class QualifyingChild(TaxModel):
     first_name: str
     last_name: str
     ssn: str
@@ -56,24 +60,24 @@ class QualifyingChild(BaseModel):
     permanently_totally_disabled: bool = False
 
 
-class OtherDependent(BaseModel):
+class OtherDependent(TaxModel):
     first_name: str
     last_name: str
     ssn: str
     relationship: str
 
 
-class NamedAmount(BaseModel):
+class NamedAmount(TaxModel):
     description: str
     amount: Decimal
 
 
-class PayerAmount(BaseModel):
+class PayerAmount(TaxModel):
     payer: str
     amount: Decimal
 
 
-class CapitalTransaction(BaseModel):
+class CapitalTransaction(TaxModel):
     description: str
     date_acquired: date
     date_sold: date
@@ -92,7 +96,7 @@ class CapitalTransaction(BaseModel):
         return "long" if (self.date_sold - self.date_acquired).days > 365 else "short"
 
 
-class DepreciationAsset(BaseModel):
+class DepreciationAsset(TaxModel):
     description: str
     placed_in_service: date
     cost: Decimal
@@ -102,41 +106,41 @@ class DepreciationAsset(BaseModel):
     recovery_period_years: Decimal = Decimal("5")
 
 
-class QbiBusiness(BaseModel):
+class QbiBusiness(TaxModel):
     business_name: str
     qualified_business_income: Decimal
     reit_ptp_income: Decimal = Decimal("0")
 
 
-class QbiComplexBusiness(BaseModel):
+class QbiComplexBusiness(TaxModel):
     business_name: str
     qualified_business_income: Decimal
     w2_wages: Decimal = Decimal("0")
     ubia_of_qualified_property: Decimal = Decimal("0")
 
 
-class RentalActivity(BaseModel):
+class RentalActivity(TaxModel):
     property_name: str
     income_items: list[NamedAmount] = Field(default_factory=list)
     expense_items: list[NamedAmount] = Field(default_factory=list)
     depreciation: Decimal = Decimal("0")
 
 
-class CareProvider(BaseModel):
+class CareProvider(TaxModel):
     name: str
     tin: str
     address: Address
     amount_paid: Decimal
 
 
-class CareDependent(BaseModel):
+class CareDependent(TaxModel):
     first_name: str
     last_name: str
     ssn: str
     qualifying_expenses: Decimal
 
 
-class StudentExpense(BaseModel):
+class StudentExpense(TaxModel):
     student_name: str
     student_ssn: str
     institution_name: str
@@ -148,7 +152,7 @@ class StudentExpense(BaseModel):
     felony_drug_conviction: bool = False
 
 
-class MonthlyMarketplaceEntry(BaseModel):
+class MonthlyMarketplaceEntry(TaxModel):
     month: Literal[
         "january",
         "february",
@@ -168,25 +172,25 @@ class MonthlyMarketplaceEntry(BaseModel):
     advance_payment_ptc: Decimal
 
 
-class EntryExitDate(BaseModel):
+class EntryExitDate(TaxModel):
     date_entered: date | None = None
     date_departed: date | None = None
 
 
-class TreatyClaim(BaseModel):
+class TreatyClaim(TaxModel):
     country: str
     treaty_article: str
     months_claimed_in_prior_years: int = 0
     current_year_exempt_income: Decimal = Decimal("0")
 
 
-class VehicleLoanInterestEntry(BaseModel):
+class VehicleLoanInterestEntry(TaxModel):
     vin: str
     interest_deducted_elsewhere: Decimal = Decimal("0")
     interest_for_schedule_1a: Decimal = Decimal("0")
 
 
-class ScheduleNECIncomeRow(BaseModel):
+class ScheduleNECIncomeRow(TaxModel):
     category: Literal[
         "dividends_us_corp",
         "dividends_foreign_corp",
@@ -213,7 +217,7 @@ class ScheduleNECIncomeRow(BaseModel):
     losses: Decimal = Decimal("0")
 
 
-class BaseFormInput(BaseModel):
+class BaseFormInput(TaxModel):
     form_code: str
     tax_year: int = 2025
 
@@ -516,7 +520,7 @@ class ScheduleEICInput(BaseFormInput):
     qualifying_children: list[QualifyingChild] = Field(default_factory=list)
 
 
-class Form8862SectionB(BaseModel):
+class Form8862SectionB(TaxModel):
     taxpayer_main_home_days_in_us: int | None = None
     spouse_main_home_days_in_us: int | None = None
     taxpayer_age: int | None = None
@@ -525,7 +529,7 @@ class Form8862SectionB(BaseModel):
     spouse_can_be_claimed_as_dependent: bool | None = None
 
 
-class Form8862CreditChild(BaseModel):
+class Form8862CreditChild(TaxModel):
     name: str
     lived_with_you_more_than_half_year: bool = True
     qualifies_for_credit: bool = True
@@ -533,13 +537,13 @@ class Form8862CreditChild(BaseModel):
     is_us_citizen_national_or_resident: bool = True
 
 
-class Form8862OtherDependent(BaseModel):
+class Form8862OtherDependent(TaxModel):
     name: str
     is_dependent: bool = True
     is_us_citizen_national_or_resident: bool = True
 
 
-class Form8862AotcStudent(BaseModel):
+class Form8862AotcStudent(TaxModel):
     name: str
     is_eligible_student: bool = True
     hope_or_aotc_claimed_for_any_4_prior_years: bool = False

@@ -90,6 +90,8 @@ one mode when the case requires it.
 - use progressive disclosure; read only the payloads, sidecars, source pages,
   summaries, and supplements needed for the issue being reviewed
 - use decimal-safe arithmetic for money
+- MUST treat `src/registry.py` and `src/processors.py` as the executable
+  source of truth for registered forms
 - be conservative near boundary cases
 - write review outputs only into the active case folder
 - return concise findings and evidence-linked summaries, not raw logs or long
@@ -98,6 +100,12 @@ one mode when the case requires it.
 - if digital asset proceeds are present but basis is missing or unclear, do not
   infer gain from proceeds; instead record the missing basis issue and request
   taxpayer cost basis records or transaction history
+- MUST fail review when saved payload values disagree with deterministic
+  recomputation from the registered processor
+- MUST fail review when a live payload omits explicit top-level fields required
+  by the model contract
+- NEVER replace a required sidecar contract with ad hoc prose, custom keys, or
+  a freeform summary file
 
 ## Case Artifact Rules
 

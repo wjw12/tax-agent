@@ -30,6 +30,8 @@ Conditional supplements:
 
 - prefer deterministic extraction before OCR or model-based extraction
 - keep output minimal and model-compatible
+- MUST follow the EXECUTABLE CONTRACT in `src/models.py`, `src/registry.py`,
+  `src/processors.py`, and `workspace/PDF_ROUTING.md`
 - write only into the active case folder under `workspace/cases/<case-id>/`
 - never overwrite sample files under `data/input/2025/` or blank forms
 - do not fill IRS PDFs
@@ -42,6 +44,14 @@ Conditional supplements:
   agent can decide whether to proceed
 - if digital asset cost basis is not present in the source set, flag it as a
   missing fact and ask for taxpayer records rather than assuming a basis value
+- MUST write EVERY top-level form field explicitly in live payload JSON, even
+  when the value is `0`, `null`, `false`, or `[]`
+- MUST keep `status`, `sources`, `computations`, and `issues` in the
+  `.audit.json` sidecar rather than the payload root
+- NEVER hand-author derived totals when the registered processor can derive
+  them from accepted source values
+- NEVER add unofficial payload keys that are not declared by the registered
+  Pydantic model
 
 ## Case Artifact Rules
 

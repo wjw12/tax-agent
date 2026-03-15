@@ -191,6 +191,32 @@ If source PDFs are added, removed, replaced, or corrected:
 If review status is `needs_review` or `blocked`, do not treat the return as
 ready for filing.
 
+## EXECUTABLE CONTRACT
+
+For ANY live case written under `workspace/cases/<case-id>/`, the EXECUTABLE
+CONTRACT in `workspace/PDF_ROUTING.md`, `src/models.py`, `src/registry.py`,
+`src/processors.py`, `src/pdf_fillers.py`, and `src/pdf_mapping.py` MUST be
+followed.
+
+NON-NEGOTIABLE RULES:
+
+- MUST use the registered model, processor, and filler when a form exists in
+  `src/registry.py`.
+- MUST derive computed filing values from the executable code path, not from
+  freehand arithmetic or prose reasoning.
+- MUST write live payload JSON with EVERY top-level model field explicitly
+  present, even when the value is `0`, `null`, `false`, or `[]`.
+- MUST keep audit metadata in the `.audit.json` sidecar, not in the form
+  payload root.
+- NEVER invent numeric tax values that cannot be traced to source evidence or a
+  reproducible Python computation trace.
+- NEVER hand-author derived totals when the registered processor already knows
+  how to compute them.
+- NEVER mark review as accepted when cross-form continuity fails, required
+  sidecar fields are missing, or recomputation disagrees with the saved payload.
+- NEVER override a failed PDF verification result with a heuristic note. If
+  read-back mismatches exist, STOP and return the case upstream.
+
 Do not let the workflow get trapped in a repeated question loop.
 
 - Distinguish critical missing items from non-critical missing items.
@@ -248,3 +274,6 @@ When using sub-agents in this workspace:
 - Keep conclusions tied to saved artifacts, not memory.
 - Do not overwrite unrelated experiment outputs.
 - If the case is unsupported, say so early and stop building a filing workflow.
+- For live case payloads, use STRICT parsing rules. Extra keys are forbidden.
+- For live case payloads, missing explicit top-level fields are a CONTRACT
+  FAILURE, not a harmless default.

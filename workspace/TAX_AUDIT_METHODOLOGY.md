@@ -219,6 +219,8 @@ For every derived figure in the payload or audit sidecar:
 - recompute the result independently
 - compare computed value to reported value
 - record the delta when they differ
+- treat `src/registry.py` and `src/processors.py` as the EXECUTABLE CONTRACT
+  for registered forms
 
 Common derived figures include:
 
@@ -255,6 +257,8 @@ payloads agree with each other and with the final filed flow.
 
 If a value is internally correct on one schedule but fails downstream to the
 next form, that is still an audit finding.
+If a live payload omits explicit top-level fields required by the model, that
+is also an audit finding even when defaults would have produced a number.
 
 ---
 

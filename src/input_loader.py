@@ -1,4 +1,4 @@
-"""Load sample JSON inputs and audit sidecars from disk."""
+"""Load reference or live JSON inputs and audit sidecars from disk."""
 
 from __future__ import annotations
 
@@ -13,10 +13,16 @@ from .registry import FORM_DEFINITIONS, parse_form_input
 DEFAULT_INPUT_DIR = Path(__file__).resolve().parent.parent / "data" / "input" / "2025"
 
 
+def _is_live_case_path(path: Path) -> bool:
+    return "workspace/cases" in str(path.resolve())
+
+
 def load_form_input(path: str | Path) -> BaseFormInput:
-    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    resolved = Path(path).resolve()
+    payload = json.loads(resolved.read_text(encoding="utf-8"))
     form_code = payload["form_code"]
-    return parse_form_input(form_code, payload)
+    validation_mode = "live" if _is_live_case_path(resolved) else "reference"
+    return parse_form_input(form_code, payload, validation_mode=validation_mode)
 
 
 def load_form_audit_sidecar(path: str | Path) -> FormAuditSidecar:

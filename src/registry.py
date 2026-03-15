@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -182,8 +182,27 @@ def get_form_definition(form_code: str) -> FormDefinition:
     return FORM_DEFINITIONS[form_code]
 
 
-def parse_form_input(form_code: str, payload: dict[str, Any]) -> BaseFormInput:
+def _validate_live_payload_contract(form_code: str, payload: dict[str, Any]) -> None:
     definition = get_form_definition(form_code)
+    expected_fields = set(definition.model.model_fields)
+    present_fields = set(payload)
+    missing_fields = sorted(expected_fields - present_fields)
+    if missing_fields:
+        raise ValueError(
+            "Live payload is missing required top-level fields for "
+            f"{form_code}: {', '.join(missing_fields)}"
+        )
+
+
+def parse_form_input(
+    form_code: str,
+    payload: dict[str, Any],
+    *,
+    validation_mode: Literal["reference", "live"] = "live",
+) -> BaseFormInput:
+    definition = get_form_definition(form_code)
+    if validation_mode == "live":
+        _validate_live_payload_contract(form_code, payload)
     return definition.model.model_validate(payload)
 
 

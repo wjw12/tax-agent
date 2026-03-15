@@ -286,6 +286,9 @@ Rules:
 - It must validate against the matching Pydantic model in `src/models.py`
 - It must remain minimal and computation-oriented
 - Do **not** add `status`, `sources`, `computations`, `issues`, or other audit metadata at the root
+- It MUST include EVERY top-level model field explicitly, even when the value
+  is `0`, `null`, `false`, or `[]`
+- Extra keys not declared by the model are FORBIDDEN
 
 Examples already present in `data/input/2025/*.json` are reference samples for
 shape only. They are not the default destination for live case output and
@@ -343,6 +346,8 @@ Every numeric value in the final form payload must point to one of:
 - a Python computation trace built from previously accepted source entries
 
 LLM-only guesses are never acceptable for numeric tax values.
+If a registered processor exists for the form, derived values MUST come from
+that executable path rather than from hand-written arithmetic.
 
 ### Runtime shape
 
