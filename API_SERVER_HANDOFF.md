@@ -171,6 +171,13 @@ For local agent behavior in this repo, use:
 - [workspace/PDF_ROUTING.md](/home/appuser/tax/workspace/PDF_ROUTING.md)
 - [workspace/TAX_AUDIT_METHODOLOGY.md](/home/appuser/tax/workspace/TAX_AUDIT_METHODOLOGY.md)
 - [workspace/PDF_FILLING.md](/home/appuser/tax/workspace/PDF_FILLING.md)
+- [workspace/FORM_1099_DA.md](/home/appuser/tax/workspace/FORM_1099_DA.md)
+- [workspace/SCHEDULE_1A_2025.md](/home/appuser/tax/workspace/SCHEDULE_1A_2025.md)
+- [workspace/CHILD_CREDITS_2025.md](/home/appuser/tax/workspace/CHILD_CREDITS_2025.md)
+- [workspace/FORM_1099_K_2025.md](/home/appuser/tax/workspace/FORM_1099_K_2025.md)
+- [workspace/SCHEDULE_C_2025_DELTAS.md](/home/appuser/tax/workspace/SCHEDULE_C_2025_DELTAS.md)
+- [workspace/FORM_8962_2025.md](/home/appuser/tax/workspace/FORM_8962_2025.md)
+- [workspace/FORM_1040_NR_2025_DELTAS.md](/home/appuser/tax/workspace/FORM_1040_NR_2025_DELTAS.md)
 
 ## Local Client Config
 

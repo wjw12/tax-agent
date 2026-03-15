@@ -7,6 +7,10 @@ This file is the source of truth for nonresident-return scope, intake
 questions, and 2025-specific rules. Do not rely on general model memory for
 `1040-NR` details when this file applies.
 
+When the case is on the `1040-NR` path, also load
+[FORM_1040_NR_2025_DELTAS.md](/home/appuser/tax/workspace/FORM_1040_NR_2025_DELTAS.md)
+for the narrow 2025 deltas and unsupported-topic routing.
+
 ## Supported 2025 Scope
 
 The current 2025 Form 1040-NR path is intended for straightforward individual
@@ -30,6 +34,10 @@ Important 2025 note:
 - Do not rely on model memory for the 2025 `Schedule 1-A` deduction rules.
   Treat the repo code and instructions as the source of truth for the new
   tips, overtime, car-loan-interest, and senior-deduction flow.
+- Nonresident aliens generally cannot claim the qualified passenger vehicle
+  loan interest deduction. Do not route that deduction onto a supported
+  `1040-NR` return unless the applicable 2025 instruction file says it is
+  allowed.
 
 Unsupported:
 
@@ -38,6 +46,9 @@ Unsupported:
 - treaty-based positions that need specialized disclosure or Form 8833 support
 - foreign partnership transfer cases that require Schedule P (Form 1040-NR)
 - estate or trust Form 1040-NR filings
+- Trump account elections that require `Form 4547`
+- farmland-sale installment elections that require `Form 1062`
+- 2025 adoption-credit cases that require unsupported `Form 8839` handling
 - cases where substantial presence, exempt-individual days, or treaty status
   cannot be determined from taxpayer facts
 

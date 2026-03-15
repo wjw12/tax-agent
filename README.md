@@ -45,6 +45,12 @@ Main prompt and sub-agent docs:
 - `workspace/EXTRACTOR.md` and `workspace/PDF_ROUTING.md` for the extraction sub-agent
 - `workspace/REVIEW.md` and `workspace/TAX_AUDIT_METHODOLOGY.md` for the review sub-agent
 - `workspace/PDF_FILLING.md` for the PDF filling sub-agent
+- targeted 2025 supplements in `workspace/FORM_1099_DA.md`,
+  `workspace/SCHEDULE_1A_2025.md`, `workspace/CHILD_CREDITS_2025.md`,
+  `workspace/FORM_1099_K_2025.md`,
+  `workspace/SCHEDULE_C_2025_DELTAS.md`,
+  `workspace/FORM_8962_2025.md`, and
+  `workspace/FORM_1040_NR_2025_DELTAS.md`
 
 Default batch PDF processing now lives in:
 

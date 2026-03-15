@@ -19,6 +19,12 @@ Conditional supplements:
 
 - load [FORM_1099_DA.md](/home/appuser/tax/workspace/FORM_1099_DA.md) only when the case includes Form 1099-DA or digital asset disposition reporting
 - load [FORM_1040_NR.md](/home/appuser/tax/workspace/FORM_1040_NR.md) when the source set is part of a Form 1040-NR case
+- load [FORM_1040_NR_2025_DELTAS.md](/home/appuser/tax/workspace/FORM_1040_NR_2025_DELTAS.md) when the source set is part of a Form 1040-NR case
+- load [SCHEDULE_1A_2025.md](/home/appuser/tax/workspace/SCHEDULE_1A_2025.md) when the source set or taxpayer facts suggest qualified tips, qualified overtime compensation, qualified passenger vehicle loan interest, or the enhanced deduction for seniors
+- load [CHILD_CREDITS_2025.md](/home/appuser/tax/workspace/CHILD_CREDITS_2025.md) when the source set includes dependent-credit materials, Schedule 8812 issues, or Form 8862 issues
+- load [FORM_1099_K_2025.md](/home/appuser/tax/workspace/FORM_1099_K_2025.md) when the source set includes Form 1099-K or payment-platform statements
+- load [SCHEDULE_C_2025_DELTAS.md](/home/appuser/tax/workspace/SCHEDULE_C_2025_DELTAS.md) when the source set includes Schedule C, Form 4562, Form 8829, Form 8995, or Form 8995-A issues
+- load [FORM_8962_2025.md](/home/appuser/tax/workspace/FORM_8962_2025.md) when the source set includes Marketplace coverage, Form 1095-A, or Form 8962 issues
 
 ## Required Behavior
 

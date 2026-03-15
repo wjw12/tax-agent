@@ -81,6 +81,18 @@ Conditional input:
 
 - load `FORM_1099_DA.md` only when the case includes digital asset disposition
   reporting or Form 1099-DA
+- load `SCHEDULE_1A_2025.md` only when the case may require Schedule 1-A
+  deductions
+- load `CHILD_CREDITS_2025.md` only when the case includes CTC, ACTC, ODC, or
+  Form 8862 issues
+- load `FORM_1099_K_2025.md` only when the case includes Form 1099-K or
+  payment-platform volume
+- load `SCHEDULE_C_2025_DELTAS.md` only when the case includes Schedule C,
+  Form 4562, Form 8829, Form 8995, or Form 8995-A issues
+- load `FORM_8962_2025.md` only when the case includes Marketplace coverage,
+  Form 1095-A, or Form 8962 issues
+- load `FORM_1040_NR.md` and `FORM_1040_NR_2025_DELTAS.md` only when the case
+  is on the Form 1040-NR path
 
 Read only what is needed for the form or issue being audited. Use progressive
 disclosure:
@@ -283,13 +295,58 @@ Focus on:
 - whether basis is missing, incomplete, or contradicted
 - whether activity reflects sales, swaps, transfers, rewards, staking, mining,
   or other categories that need different handling
+- whether digital-asset transactions were mapped to the 2025 `Form 8949` box
+  family (`G/H/I` for short-term, `J/K/L` for long-term) instead of legacy
+  `C/F`
 
 Key system rule:
 
 - if proceeds are present but basis is missing or unclear, do not infer gain
   from proceeds; record the missing basis issue and request taxpayer records
 
+### Schedule 1-A Cases
+
+Load `SCHEDULE_1A_2025.md` when triggered.
+
+Focus on:
+
+- whether qualified tips, qualified overtime compensation, qualified passenger
+  vehicle loan interest, and enhanced senior deduction facts were routed to
+  `Schedule 1-A`
+- whether personal-use vehicle interest stayed on `Schedule 1-A` and only any
+  supported business-use share remained on `Schedule C`, `Schedule E`, or
+  `Schedule F`
+- whether the case evidence supports the 2025 eligibility gates before the
+  deduction amount is accepted
+
+### 1099-K And Platform Payment Cases
+
+Load `FORM_1099_K_2025.md` when triggered.
+
+Focus on:
+
+- whether gross platform volume was classified correctly instead of treated as
+  automatic taxable business income
+- whether personal-item loss cases were backed out through the return flow
+  rather than forced into business income
+- whether genuine gains were still routed to `Form 8949` and `Schedule D`
+
+### Child Credit And Form 8862 Cases
+
+Load `CHILD_CREDITS_2025.md` when triggered.
+
+Focus on:
+
+- taxpayer and child `SSN` or `ITIN` timing for `CTC`, `ACTC`, `ODC`, and
+  `AOTC`
+- whether failed `CTC` or `ACTC` identity cases were considered for `ODC`
+  instead of being forced into the wrong credit
+- whether `Form 8862` recovery rules were applied together with the 2025
+  identity rules
+
 ### Schedule C Cases
+
+Load `SCHEDULE_C_2025_DELTAS.md` when triggered.
 
 Focus on:
 
@@ -298,6 +355,17 @@ Focus on:
 - duplicates across statements, ledgers, and payment-platform reports
 - mixed personal/business use flags
 - missing records that make the net result undefensible
+
+### Marketplace And Form 8962 Cases
+
+Load `FORM_8962_2025.md` when triggered.
+
+Focus on:
+
+- whether the case correctly treated a 2025 coverage month as potentially
+  valid even when premiums were only partially paid
+- whether the case required `Form 1095-A` for Marketplace coverage without
+  incorrectly blocking on missing mailed `Form 1095-B` or `Form 1095-C`
 
 ### Schedule E Rental Cases
 

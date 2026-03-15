@@ -20,6 +20,12 @@ Conditional supplements:
 
 - load [FORM_1099_DA.md](/home/appuser/tax/workspace/FORM_1099_DA.md) only when the case includes Form 1099-DA or digital asset disposition reporting
 - load [FORM_1040_NR.md](/home/appuser/tax/workspace/FORM_1040_NR.md) when the case is on the Form 1040-NR path
+- load [FORM_1040_NR_2025_DELTAS.md](/home/appuser/tax/workspace/FORM_1040_NR_2025_DELTAS.md) when the case is on the Form 1040-NR path
+- load [SCHEDULE_1A_2025.md](/home/appuser/tax/workspace/SCHEDULE_1A_2025.md) when the case may require Schedule 1-A deductions
+- load [CHILD_CREDITS_2025.md](/home/appuser/tax/workspace/CHILD_CREDITS_2025.md) when the case includes CTC, ACTC, ODC, or Form 8862 issues
+- load [FORM_1099_K_2025.md](/home/appuser/tax/workspace/FORM_1099_K_2025.md) when the case includes Form 1099-K or payment-platform volume
+- load [SCHEDULE_C_2025_DELTAS.md](/home/appuser/tax/workspace/SCHEDULE_C_2025_DELTAS.md) when the case includes Schedule C, Form 4562, Form 8829, Form 8995, or Form 8995-A issues
+- load [FORM_8962_2025.md](/home/appuser/tax/workspace/FORM_8962_2025.md) when the case includes Marketplace coverage, Form 1095-A, or Form 8962 issues
 
 ## What You Own
 

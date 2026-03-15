@@ -4,7 +4,9 @@
 
 Form 1099-DA is a digital asset disposition reporting form.
 
-For tax year 2025, treat it primarily as a proceeds-reporting document.
+For tax year 2025, broker reporting on `Form 1099-DA` begins for transactions
+on or after `2025-01-01`.
+Treat the form primarily as a proceeds-reporting document.
 Do not treat it as a complete gain or loss statement by itself.
 
 Key rule:
@@ -13,6 +15,23 @@ Key rule:
 
 Gross proceeds reflects the total amount received from dispositions. It can be
 large even when the actual taxable gain is small.
+
+## 2025 Return Mapping Rule
+
+For tax year 2025, digital-asset transactions use the new `Form 8949` box
+codes:
+
+- `G/H/I` for short-term transactions
+- `J/K/L` for long-term transactions
+
+Do not use the legacy `C` or `F` boxes for digital-asset transactions.
+
+Use:
+
+- `G` or `J` when `Form 1099-DA` was issued and basis was reported to the IRS
+- `H` or `K` when `Form 1099-DA` was issued but basis was not reported or not
+  provided
+- `I` or `L` when there is no `Form 1099-DA`
 
 ## What Counts As a Disposition
 
@@ -46,6 +65,10 @@ If the taxpayer can provide records, the case may still be supportable.
 If the taxpayer cannot provide enough records to support basis, then the case
 may become unsupported because the filing position would not be defensible.
 
+If a customer transferred assets in from another platform, transfer statements
+may help with lot ordering, but they are not a substitute for defensible basis
+support on the return.
+
 ## Covered Vs Non-Covered
 
 If a disposition is marked non-covered, do not assume cost basis was reported
@@ -53,6 +76,14 @@ to the IRS.
 
 Non-covered generally means the taxpayer may need their own records to support
 basis and holding period.
+
+## Missing Form Rule
+
+Do not treat "I did not receive a Form 1099-DA" as a reason to skip reporting.
+
+For tax year 2025, foreign brokers may not furnish `Form 1099-DA`.
+Taxable digital-asset transactions still must be reported whether or not the
+taxpayer received the form.
 
 ## Time Zone Note
 
@@ -84,3 +115,10 @@ Better:
 
 - "This form shows the total amount moved through sales and exchanges, not your actual profit. I still need the cost information for those assets."
 - "To finish this accurately, I need the records showing what you originally paid for the assets you sold or swapped."
+
+## Source Pointers
+
+Load only if needed:
+
+- [broker-reporting-faq.md](/home/appuser/tax/workspace/broker-reporting-faq.md)
+- [understanding-1099da.md](/home/appuser/tax/workspace/understanding-1099da.md)
