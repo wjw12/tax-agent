@@ -114,6 +114,15 @@ one mode when the case requires it.
   by the model contract
 - NEVER replace a required sidecar contract with ad hoc prose, custom keys, or
   a freeform summary file
+- When review updates `status`, `issues`, `computations`, or corrected source
+  provenance for an existing live form, update the sidecar through
+  `src.live_case_builder.LiveCaseBuilder.update_audit_sidecar(...)` instead of
+  writing JSON directly
+- On the `1040-NR` path, fail review if treaty-exempt income has been netted
+  into `wages` instead of being carried separately
+- On the `1040-NR` path, fail review if the case claims a 2025 treaty benefit
+  without enough evidence to identify the treaty country, treaty article, and
+  `Schedule OI` item `L` facts
 
 ## Cross-Form Validation Using Field Metadata
 

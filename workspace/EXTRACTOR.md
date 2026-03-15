@@ -61,10 +61,23 @@ Conditional supplements:
   when the value is `0`, `null`, `false`, or `[]`
 - MUST keep `status`, `sources`, `computations`, and `issues` in the
   `.audit.json` sidecar rather than the payload root
+- MUST write live payload and sidecar artifacts under
+  `workspace/cases/<case-id>/data/input/<tax-year>/` through
+  `src.live_case_builder.LiveCaseBuilder`; do not write those files with raw
+  `json.dumps(...)`, `Path.write_text(...)`, or direct `write_json_artifact(...)`
+- When extraction has an in-memory runtime object containing `status`,
+  `sources`, `computations`, `issues`, and `form_payload`, persist it through
+  `src.live_case_builder.LiveCaseBuilder.write_runtime_result(...)` or
+  `src.live_case_builder.write_live_case_runtime_result(...)`
 - NEVER hand-author derived totals when the registered processor can derive
   them from accepted source values
 - NEVER add unofficial payload keys that are not declared by the registered
   Pydantic model
+- On the `1040-NR` path, never net treaty-exempt income out of `wages`. Keep
+  gross wages in the wage field, persist treaty-exempt income separately, and
+  route treaty disclosure detail to `Schedule OI`
+- On the `1040-NR` path, do not produce a treaty claim when the treaty's 2025
+  status cannot be confirmed from the loaded official materials
 
 ## Field Metadata Usage During Extraction
 

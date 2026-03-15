@@ -230,6 +230,10 @@ NON-NEGOTIABLE RULES:
   present, even when the value is `0`, `null`, `false`, or `[]`.
 - MUST keep audit metadata in the `.audit.json` sidecar, not in the form
   payload root.
+- MUST write live case payloads and `.audit.json` sidecars under
+  `workspace/cases/<case-id>/data/input/<tax-year>/` through
+  `src.live_case_builder.LiveCaseBuilder`; direct JSON writes to that directory
+  are forbidden.
 - MUST consult `src/field_metadata.py` before constructing any form payload.
   See the **Field Metadata And Inter-Form Wiring** section below.
 - MUST use `src/qbi.py` when the case includes `Form 8995`, `Form 8995-A`, or

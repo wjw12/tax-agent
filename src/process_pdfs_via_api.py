@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,6 +10,7 @@ from typing import Any
 
 import httpx
 
+from .case_artifacts import write_json_artifact
 from .tax_server_client import DEFAULT_TAX_SERVER_BASE_URL, TaxServerClient
 
 
@@ -38,8 +38,7 @@ def make_case_id(prefix: str, pdf_path: Path) -> str:
 
 
 def write_json(path: Path, payload: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    write_json_artifact(path, payload)
 
 
 def build_parser() -> argparse.ArgumentParser:
