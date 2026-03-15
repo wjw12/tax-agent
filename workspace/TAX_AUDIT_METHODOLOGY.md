@@ -66,6 +66,8 @@ Primary inputs:
 - extracted payload JSON under
   `workspace/cases/<case-id>/data/input/<tax-year>/`
 - matching `.audit.json` sidecars
+- deduction-discovery output under
+  `workspace/cases/<case-id>/intake/deduction-leads.json` when present
 - retained extraction outputs under
   `workspace/cases/<case-id>/source-sets/<source-set-id>/extraction/`
 - source-set manifests under

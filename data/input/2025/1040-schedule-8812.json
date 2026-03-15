@@ -22,7 +22,7 @@
       "relationship": "Parent"
     }
   ],
-  "child_tax_credit_per_child": 2000,
+  "child_tax_credit_per_child": 2200,
   "credit_for_other_dependents": 500,
   "phaseout_threshold": 400000
 }

@@ -35,6 +35,20 @@ from .models import (
     ScheduleEInput,
     ScheduleSEInput,
 )
+from .tax_constants_2025 import (
+    CAPITAL_LOSS_2025,
+    CHILD_CREDITS_2025,
+    DEPENDENT_CARE_2025,
+    EDUCATION_CREDITS_2025,
+    HSA_2025,
+    SALT_2025,
+    SCHEDULE_1A_2025,
+    SCHEDULE_A_2025,
+    SECTION_179_2025,
+    SELF_EMPLOYMENT_TAX_2025,
+    salt_cap_for_filing_status,
+    schedule_1a_threshold,
+)
 
 
 def _sum_named_amounts(items) -> Decimal:
@@ -47,6 +61,14 @@ def _thousands_floor(value: Decimal) -> Decimal:
 
 def _thousands_ceiling(value: Decimal) -> Decimal:
     return (value / Decimal("1000")).to_integral_value(rounding=ROUND_CEILING)
+
+
+def _phaseout_fraction(value: Decimal, start: Decimal, end: Decimal) -> Decimal:
+    if value <= start:
+        return Decimal("1")
+    if value >= end:
+        return Decimal("0")
+    return (end - value) / (end - start)
 
 
 def process_1040(data: Form1040Input) -> FormComputation:
@@ -263,7 +285,7 @@ def process_1040_nr_schedule_oi(data: Form1040NRScheduleOIInput) -> FormComputat
 
 
 def process_1040_nr_schedule_a(data: Form1040NRScheduleAInput) -> FormComputation:
-    state_tax_cap = Decimal("20000") if data.filing_status == "married_filing_separately" else Decimal("40000")
+    state_tax_cap = salt_cap_for_filing_status(data.filing_status)
     deductible_state_taxes = min(data.state_local_income_taxes, state_tax_cap)
     charity_total = (
         data.gifts_by_cash_or_check
@@ -301,35 +323,36 @@ def process_schedule_1_a(data: Schedule1AInput) -> FormComputation:
     line_3 = data.modified_agi_base + modified_agi_adjustments
     line_4c = max(data.qualified_tips_w2, data.qualified_tips_form_4137)
     line_6 = line_4c + data.qualified_tips_trade_or_business
-    line_7 = min(line_6, Decimal("25000"))
-    line_9 = Decimal("300000") if jointly else Decimal("150000")
+    line_7 = min(line_6, SCHEDULE_1A_2025["qualified_tips"]["cap"])
+    line_9 = schedule_1a_threshold("qualified_tips", data.filing_status)
     line_10 = max(Decimal("0"), line_3 - line_9)
     line_11 = _thousands_floor(line_10) if line_10 > 0 else Decimal("0")
-    line_12 = line_11 * Decimal("100")
+    line_12 = line_11 * SCHEDULE_1A_2025["qualified_tips"]["phaseout_per_1000"]
     line_13 = max(Decimal("0"), line_7 - line_12)
 
     line_14c = data.qualified_overtime_w2 + data.qualified_overtime_1099
-    line_15 = min(line_14c, Decimal("25000") if jointly else Decimal("12500"))
-    line_17 = Decimal("300000") if jointly else Decimal("150000")
+    overtime_caps = SCHEDULE_1A_2025["qualified_overtime"]["cap"]
+    line_15 = min(line_14c, overtime_caps["married_filing_jointly"] if jointly else overtime_caps["other"])
+    line_17 = schedule_1a_threshold("qualified_overtime", data.filing_status)
     line_18 = max(Decimal("0"), line_3 - line_17)
     line_19 = _thousands_floor(line_18) if line_18 > 0 else Decimal("0")
-    line_20 = line_19 * Decimal("100")
+    line_20 = line_19 * SCHEDULE_1A_2025["qualified_overtime"]["phaseout_per_1000"]
     line_21 = max(Decimal("0"), line_15 - line_20)
 
     entry_one = data.vehicle_loan_interest_entries[0] if data.vehicle_loan_interest_entries else None
     entry_two = data.vehicle_loan_interest_entries[1] if len(data.vehicle_loan_interest_entries) > 1 else None
     line_23 = sum_decimals(entry.interest_for_schedule_1a for entry in data.vehicle_loan_interest_entries[:2])
-    line_24 = min(line_23, Decimal("10000"))
-    line_26 = Decimal("200000") if jointly else Decimal("100000")
+    line_24 = min(line_23, SCHEDULE_1A_2025["qualified_passenger_vehicle_loan_interest"]["cap"])
+    line_26 = schedule_1a_threshold("qualified_passenger_vehicle_loan_interest", data.filing_status)
     line_27 = max(Decimal("0"), line_3 - line_26)
     line_28 = _thousands_ceiling(line_27) if line_27 > 0 else Decimal("0")
-    line_29 = line_28 * Decimal("200")
+    line_29 = line_28 * SCHEDULE_1A_2025["qualified_passenger_vehicle_loan_interest"]["phaseout_per_1000_ceiling"]
     line_30 = line_24 if line_27 <= 0 else max(Decimal("0"), line_24 - line_29)
 
-    line_32 = Decimal("150000") if jointly else Decimal("75000")
+    line_32 = schedule_1a_threshold("enhanced_senior_deduction", data.filing_status)
     line_33 = max(Decimal("0"), line_3 - line_32)
-    line_34 = line_33 * Decimal("0.06")
-    line_35 = max(Decimal("0"), Decimal("6000") - line_34)
+    line_34 = line_33 * SCHEDULE_1A_2025["enhanced_senior_deduction"]["phaseout_rate"]
+    line_35 = max(Decimal("0"), SCHEDULE_1A_2025["enhanced_senior_deduction"]["amount_per_eligible_person"] - line_34)
     line_36a = line_35 if data.taxpayer_is_eligible_senior else Decimal("0")
     line_36b = line_35 if jointly and data.spouse_is_eligible_senior else Decimal("0")
     line_37 = line_36a + line_36b
@@ -479,7 +502,7 @@ def process_schedule_3(data: Schedule3Input) -> FormComputation:
 
 
 def process_schedule_a(data: ScheduleAInput) -> FormComputation:
-    medical_floor = data.agi * Decimal("0.075")
+    medical_floor = data.agi * SCHEDULE_A_2025["medical_expense_floor_rate"]
     deductible_medical = max(Decimal("0"), data.unreimbursed_medical_expenses - medical_floor)
     taxes_before_cap = max(data.state_local_income_taxes, data.state_local_sales_taxes)
     total_taxes = min(
@@ -529,7 +552,7 @@ def process_schedule_d(data: ScheduleDInput) -> FormComputation:
     short_term = _sum_named_amounts(data.short_term_totals) + data.short_term_carryover
     long_term = _sum_named_amounts(data.long_term_totals) + data.long_term_carryover
     combined = short_term + long_term
-    deductible_loss = min(Decimal("3000"), abs(combined)) if combined < 0 else Decimal("0")
+    deductible_loss = min(CAPITAL_LOSS_2025["max_deduction"], abs(combined)) if combined < 0 else Decimal("0")
     form = FormComputation(form_code=data.form_code, form_name="Schedule D")
     form.add_line("7", "Net short-term capital gain or loss", short_term)
     form.add_line("15", "Net long-term capital gain or loss", long_term)
@@ -587,9 +610,9 @@ def process_schedule_c(data: ScheduleCInput) -> FormComputation:
 
 
 def process_schedule_se(data: ScheduleSEInput) -> FormComputation:
-    earnings = max(Decimal("0"), (data.net_profit + data.optional_farm_income + data.optional_church_employee_income) * Decimal("0.9235"))
-    se_tax = earnings * Decimal("0.153")
-    deduction = se_tax * Decimal("0.5")
+    earnings = max(Decimal("0"), (data.net_profit + data.optional_farm_income + data.optional_church_employee_income) * SELF_EMPLOYMENT_TAX_2025["earnings_factor"])
+    se_tax = earnings * SELF_EMPLOYMENT_TAX_2025["tax_rate"]
+    deduction = se_tax * SELF_EMPLOYMENT_TAX_2025["deductible_fraction"]
     form = FormComputation(form_code=data.form_code, form_name="Schedule SE")
     form.add_line("2", "Net profit or loss from Schedule C", data.net_profit)
     form.add_line("4c", "Net earnings from self-employment", earnings)
@@ -599,19 +622,44 @@ def process_schedule_se(data: ScheduleSEInput) -> FormComputation:
 
 
 def process_4562(data: Form4562Input) -> FormComputation:
-    elected_section_179 = sum_decimals(asset.section_179_election for asset in data.assets)
+    requested_section_179_total = Decimal("0")
     bonus_depreciation = Decimal("0")
     ordinary_depreciation = Decimal("0")
     total_basis = Decimal("0")
+    asset_rows: list[tuple[Decimal, Decimal, Decimal]] = []
     for asset in data.assets:
         business_basis = asset.cost * (asset.business_use_percent / Decimal("100"))
         total_basis += business_basis
-        bonus_depreciation += business_basis * (asset.bonus_depreciation_rate / Decimal("100"))
-        if asset.recovery_period_years > 0:
-            ordinary_depreciation += max(Decimal("0"), business_basis - asset.section_179_election) / asset.recovery_period_years
+        requested_election = min(asset.section_179_election, business_basis)
+        if asset.is_suv:
+            requested_election = min(requested_election, SECTION_179_2025["suv_cap"])
+        requested_section_179_total += requested_election
+        asset_rows.append((business_basis, requested_election, asset.recovery_period_years))
+
+    section_179_phaseout = max(Decimal("0"), total_basis - SECTION_179_2025["phaseout_start"])
+    section_179_limit = max(Decimal("0"), SECTION_179_2025["max_deduction"] - section_179_phaseout)
+    elected_section_179 = min(requested_section_179_total, section_179_limit)
+    section_179_ratio = (
+        elected_section_179 / requested_section_179_total if requested_section_179_total > 0 else Decimal("0")
+    )
+
+    for index, asset in enumerate(data.assets):
+        business_basis, requested_election, recovery_period_years = asset_rows[index]
+        allowed_election = requested_election * section_179_ratio
+        depreciable_basis = max(Decimal("0"), business_basis - allowed_election)
+        bonus_depreciation += depreciable_basis * (asset.bonus_depreciation_rate / Decimal("100"))
+        if recovery_period_years > 0:
+            ordinary_depreciation += depreciable_basis / recovery_period_years
+
     total_depreciation = elected_section_179 + bonus_depreciation + ordinary_depreciation
     form = FormComputation(form_code=data.form_code, form_name="Form 4562")
-    form.metadata["asset_count"] = len(data.assets)
+    form.metadata.update(
+        {
+            "asset_count": len(data.assets),
+            "section_179_limit": str(section_179_limit),
+            "section_179_phaseout": str(section_179_phaseout),
+        }
+    )
     form.add_line("2", "Total cost elected for section 179", total_basis)
     form.add_line("12", "Section 179 expense deduction", elected_section_179)
     form.add_line("14", "Special depreciation allowance", bonus_depreciation)
@@ -708,7 +756,11 @@ def process_8812(data: Schedule8812Input) -> FormComputation:
     )
     phaseout_reduction = phaseout_units * Decimal("50")
     allowable_nonrefundable = min(data.tax_liability_before_credits, max(Decimal("0"), total_potential_credit - phaseout_reduction))
-    additional_child_credit = max(Decimal("0"), base_child_credit - allowable_nonrefundable)
+    max_additional_child_credit = Decimal(child_count) * CHILD_CREDITS_2025["additional_child_tax_credit_per_child_max"]
+    additional_child_credit = min(
+        max_additional_child_credit,
+        max(Decimal("0"), base_child_credit - allowable_nonrefundable),
+    )
     form = FormComputation(form_code=data.form_code, form_name="Schedule 8812")
     form.add_line("4", "Potential child tax credit", base_child_credit)
     form.add_line("5", "Credit for other dependents", other_dependent_credit)
@@ -732,7 +784,11 @@ def process_schedule_eic(data: ScheduleEICInput) -> FormComputation:
 
 def process_2441(data: Form2441Input) -> FormComputation:
     qualifying_expenses = sum_decimals(person.qualifying_expenses for person in data.qualifying_persons)
-    expense_limit = Decimal("3000") if len(data.qualifying_persons) == 1 else Decimal("6000")
+    expense_limit = (
+        DEPENDENT_CARE_2025["expense_cap_one_person"]
+        if len(data.qualifying_persons) == 1
+        else DEPENDENT_CARE_2025["expense_cap_two_or_more"]
+    )
     used_expenses = min(qualifying_expenses, expense_limit)
     income_limit = min(data.taxpayer_earned_income, data.spouse_earned_income or data.taxpayer_earned_income)
     adjusted_expenses = max(Decimal("0"), min(used_expenses, income_limit) - data.dependent_care_benefits)
@@ -750,17 +806,36 @@ def process_2441(data: Form2441Input) -> FormComputation:
 
 
 def process_8863(data: Form8863Input) -> FormComputation:
-    aotc_credit = Decimal("0")
+    aotc_pre_phaseout = Decimal("0")
     llc_expenses = Decimal("0")
     for student in data.students:
         net_expenses = max(Decimal("0"), student.qualified_expenses - student.scholarships_and_grants)
         if student.credit_type == "aotc":
-            first_portion = min(net_expenses, Decimal("2000"))
-            second_portion = min(max(Decimal("0"), net_expenses - Decimal("2000")), Decimal("2000"))
-            aotc_credit += first_portion + (second_portion * Decimal("0.25"))
+            first_tier = EDUCATION_CREDITS_2025["aotc"]["first_expense_tier"]
+            second_tier = EDUCATION_CREDITS_2025["aotc"]["second_expense_tier"]
+            first_portion = min(net_expenses, first_tier)
+            second_portion = min(max(Decimal("0"), net_expenses - first_tier), second_tier)
+            aotc_pre_phaseout += first_portion + (
+                second_portion * EDUCATION_CREDITS_2025["aotc"]["second_tier_rate"]
+            )
         else:
             llc_expenses += net_expenses
-    llc_credit = min(llc_expenses, Decimal("10000")) * Decimal("0.20")
+    llc_credit_pre_phaseout = min(
+        llc_expenses,
+        EDUCATION_CREDITS_2025["llc"]["expense_cap_per_return"],
+    ) * EDUCATION_CREDITS_2025["llc"]["rate"]
+    phaseout = EDUCATION_CREDITS_2025["aotc"]["phaseout"][
+        "married_filing_jointly" if data.filing_status == "married_filing_jointly" else "other"
+    ]
+    phaseout_ratio = _phaseout_fraction(data.modified_agi, phaseout["start"], phaseout["end"])
+    aotc_credit = min(
+        EDUCATION_CREDITS_2025["aotc"]["max_credit_per_student"] * Decimal(sum(1 for student in data.students if student.credit_type == "aotc")),
+        aotc_pre_phaseout,
+    ) * phaseout_ratio
+    llc_credit = min(
+        EDUCATION_CREDITS_2025["llc"]["max_credit_per_return"],
+        llc_credit_pre_phaseout,
+    ) * phaseout_ratio
     total_credit = aotc_credit + llc_credit
     form = FormComputation(form_code=data.form_code, form_name="Form 8863")
     form.metadata["students"] = [student.student_name for student in data.students]
@@ -771,9 +846,9 @@ def process_8863(data: Form8863Input) -> FormComputation:
 
 
 def process_8889(data: Form8889Input) -> FormComputation:
-    annual_limit = Decimal("4300") if data.coverage_type == "self" else Decimal("8550")
+    annual_limit = HSA_2025["self_only_hdhp_limit"] if data.coverage_type == "self" else HSA_2025["family_hdhp_limit"]
     if data.age_55_or_older:
-        annual_limit += Decimal("1000")
+        annual_limit += HSA_2025["catch_up_amount"]
     prorated_limit = annual_limit * Decimal(data.months_eligible) / Decimal("12")
     allowed_contributions = min(
         prorated_limit,

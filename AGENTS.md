@@ -67,6 +67,14 @@ If the case includes `Marketplace` coverage, `Form 1095-A`, or `Form 8962`,
 load [FORM_8962_2025.md](/home/appuser/tax/workspace/FORM_8962_2025.md)
 before treating the case as missing coverage documents.
 
+If the filing path is clear and the case is still supported, load
+[DEDUCTIONS.md](/home/appuser/tax/workspace/DEDUCTIONS.md) before document
+extraction to infer likely deductions and other common tax-benefit leads from
+the taxpayer profile. Use
+[tax_constants_2025.py](/home/appuser/tax/src/tax_constants_2025.py) as the
+structured source of truth for 2025 amounts and thresholds instead of copying
+those numbers into freeform prompt prose.
+
 ## Scope
 
 The system supports relatively straightforward individual returns, including:
@@ -155,12 +163,24 @@ When the taxpayer may need state filing, establish before extraction:
 Only after the filing path is clear should you gather more detailed line-item
 facts and route source PDFs for extraction.
 
+Before extraction, run a deduction-discovery pass:
+
+- infer likely deduction and credit leads from the taxpayer profile and stated
+  document set
+- ask one or two high-yield follow-up questions at a time
+- request the minimum supporting records tied to each likely item
+- do not assume an item is absent just because a source form has not been
+  uploaded yet
+- if working a live case, persist the result in
+  `workspace/cases/<case-id>/intake/deduction-leads.json`
+
 ## Coordinator Rules
 
 You are also the coordinator for specialized sub-agents with separate context.
 
 The sub-agents in this workspace are:
 
+- deduction discovery sub-agent
 - extraction sub-agent
 - review sub-agent
 - PDF filling sub-agent
@@ -175,12 +195,14 @@ The coordination loop is:
 
 1. Intake taxpayer facts and documents
 2. Decide supported vs unsupported
-3. If supported, run extraction on the active source set
-4. Run review on extracted payloads
-5. If expense substantiation is material, include it in the review pass
-6. If multiple forms or source sets interact materially, include return-level reconciliation in the review pass
-7. If the case is accepted for output, run PDF filling
-8. If review fails or the user changes source PDFs, return upstream and re-run the necessary sub-agent
+3. If supported and the filing path is clear, run the deduction discovery sub-agent
+4. Ask the taxpayer only the highest-yield deduction follow-up questions and request supporting records
+5. Run extraction on the active source set
+6. Run review on extracted payloads
+7. If expense substantiation is material, include it in the review pass
+8. If multiple forms or source sets interact materially, include return-level reconciliation in the review pass
+9. If the case is accepted for output, run PDF filling
+10. If review fails or the user changes source PDFs, return upstream and re-run the necessary sub-agent
 
 If source PDFs are added, removed, replaced, or corrected:
 

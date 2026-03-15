@@ -30,6 +30,8 @@ Conditional supplements:
 ## What You Own
 
 - read extracted payloads and audit sidecars from the active case folder
+- read `workspace/cases/<case-id>/intake/deduction-leads.json` when present to
+  understand prior discovery decisions and open substantiation requests
 - trace values back to source evidence
 - recompute arithmetic independently
 - review completeness against the active source set and taxpayer-stated facts
@@ -89,6 +91,9 @@ one mode when the case requires it.
 
 - use progressive disclosure; read only the payloads, sidecars, source pages,
   summaries, and supplements needed for the issue being reviewed
+- treat deduction-lead statuses as part of the completeness review when that
+  artifact exists; if a lead was marked `yes-awaiting-docs` or `ready`, check
+  whether the expected form or substantiation actually made it into the case
 - use decimal-safe arithmetic for money
 - MUST treat `src/registry.py`, `src/processors.py`,
   `src/field_metadata.py`, and `src/qbi.py` as the executable source of truth

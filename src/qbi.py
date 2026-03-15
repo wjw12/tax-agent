@@ -16,9 +16,10 @@ from .models import (
     ScheduleSEInput,
 )
 from .processors import process_8995, process_8995_a, process_schedule_c, process_schedule_se
+from .tax_constants_2025 import QBI_2025, qbi_form_8995_threshold
 
-QBI_SIMPLIFIED_THRESHOLD_MFJ_2025 = Decimal("394600")
-QBI_SIMPLIFIED_THRESHOLD_OTHER_2025 = Decimal("197300")
+QBI_SIMPLIFIED_THRESHOLD_MFJ_2025 = QBI_2025["form_8995_taxable_income_threshold"]["married_filing_jointly"]
+QBI_SIMPLIFIED_THRESHOLD_OTHER_2025 = QBI_2025["form_8995_taxable_income_threshold"]["other"]
 QBI_FORM_CODE = Literal["8995", "8995-A"]
 
 

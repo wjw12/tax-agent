@@ -9,7 +9,9 @@
   "mapped_checkbox_fields": {},
   "unmapped_keys": [],
   "ignored_keys": [
-    "meta_asset_count"
+    "meta_asset_count",
+    "meta_section_179_limit",
+    "meta_section_179_phaseout"
   ],
   "line_field_map": {
     "Ln1": "f1_4[0]",

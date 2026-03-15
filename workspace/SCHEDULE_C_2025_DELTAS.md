@@ -22,8 +22,15 @@ back to older patterns.
 
 ## 2025 QBI Rule
 
+- Use `Form 8995` only when taxable income before the `QBI` deduction is at or
+  below `394,600` dollars for `MFJ` or `197,300` dollars for all other filing
+  statuses. Above that, route to `Form 8995-A`.
 - Excludable qualified tip income under section `224` is excluded from `QBI`
   for `Form 8995` and `Form 8995-A`.
+
+## 2025 Mileage Rule
+
+- The standard business mileage rate is `70` cents per mile for tax year 2025.
 
 ## Mixed-Use Vehicle And Home-Office Routing
 
@@ -40,3 +47,4 @@ back to older patterns.
 - [4562-whatsnew.md](/home/appuser/tax/workspace/4562-whatsnew.md)
 - [8995-whatsnew.md](/home/appuser/tax/workspace/8995-whatsnew.md)
 - [8829-whatsnew.md](/home/appuser/tax/workspace/8829-whatsnew.md)
+- [tax_constants_2025.py](/home/appuser/tax/src/tax_constants_2025.py)

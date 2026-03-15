@@ -42,9 +42,11 @@ uv run --python .venv/bin/python --no-project ...
 Main prompt and sub-agent docs:
 
 - `AGENTS.md` for intake and coordinator behavior
+- `workspace/DEDUCTIONS.md` for deduction and common tax-benefit discovery
 - `workspace/EXTRACTOR.md` and `workspace/PDF_ROUTING.md` for the extraction sub-agent
 - `workspace/REVIEW.md` and `workspace/TAX_AUDIT_METHODOLOGY.md` for the review sub-agent
 - `workspace/PDF_FILLING.md` for the PDF filling sub-agent
+- `src/tax_constants_2025.py` for structured 2025 amounts and thresholds
 - targeted 2025 supplements in `workspace/FORM_1099_DA.md`,
   `workspace/SCHEDULE_1A_2025.md`, `workspace/CHILD_CREDITS_2025.md`,
   `workspace/FORM_1099_K_2025.md`,

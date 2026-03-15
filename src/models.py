@@ -104,6 +104,7 @@ class DepreciationAsset(TaxModel):
     section_179_election: Decimal = Decimal("0")
     bonus_depreciation_rate: Decimal = Decimal("0")
     recovery_period_years: Decimal = Decimal("5")
+    is_suv: bool = False
 
 
 class QbiBusiness(TaxModel):
@@ -411,7 +412,7 @@ class ScheduleAInput(BaseFormInput):
     gifts_to_charity_other: Decimal = Decimal("0")
     casualty_and_theft_losses: Decimal = Decimal("0")
     other_itemized_deductions: Decimal = Decimal("0")
-    salt_cap: Decimal = Decimal("10000")
+    salt_cap: Decimal = Decimal("40000")
 
 
 class ScheduleBInput(BaseFormInput):
@@ -504,7 +505,7 @@ class Schedule8812Input(BaseFormInput):
     earned_income: Decimal = Decimal("0")
     qualifying_children: list[QualifyingChild] = Field(default_factory=list)
     other_dependents: list[OtherDependent] = Field(default_factory=list)
-    child_tax_credit_per_child: Decimal = Decimal("2000")
+    child_tax_credit_per_child: Decimal = Decimal("2200")
     credit_for_other_dependents: Decimal = Decimal("500")
     phaseout_threshold: Decimal = Decimal("400000")
 

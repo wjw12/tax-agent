@@ -121,7 +121,7 @@ FIELD_METADATA: dict[str, dict[str, FieldMeta]] = {
         "standard_deduction": FieldMeta(
             FieldRole.TAXPAYER_FACT,
             description="Determined by filing status, age, and dependency status",
-            notes="2025: single=$15,750, MFJ=$30,700, HOH=$22,500.",
+            notes="2025: single=$15,750, MFS=$15,750, MFJ=$31,500, QSS=$31,500, HOH=$23,625.",
         ),
         "qbi_deduction": FieldMeta(
             FieldRole.CROSS_FORM,
@@ -402,7 +402,7 @@ FIELD_METADATA: dict[str, dict[str, FieldMeta]] = {
         "other_itemized_deductions": FieldMeta(FieldRole.SOURCE),
         "salt_cap": FieldMeta(
             FieldRole.TAXPAYER_FACT,
-            notes="2025: $10,000 default ($5,000 MFS). Changed to $40,000 for 2025.",
+            notes="2025: $40,000 default ($20,000 MFS).",
         ),
     },
 
@@ -499,7 +499,7 @@ FIELD_METADATA: dict[str, dict[str, FieldMeta]] = {
         "earned_income": FieldMeta(FieldRole.SOURCE),
         "qualifying_children": FieldMeta(FieldRole.TAXPAYER_FACT),
         "other_dependents": FieldMeta(FieldRole.TAXPAYER_FACT),
-        "child_tax_credit_per_child": FieldMeta(FieldRole.TAXPAYER_FACT, notes="2025: $2,000"),
+        "child_tax_credit_per_child": FieldMeta(FieldRole.TAXPAYER_FACT, notes="2025: $2,200"),
         "credit_for_other_dependents": FieldMeta(FieldRole.TAXPAYER_FACT, notes="2025: $500"),
         "phaseout_threshold": FieldMeta(FieldRole.TAXPAYER_FACT),
     },
