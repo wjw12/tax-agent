@@ -8,7 +8,7 @@ questions, and 2025-specific rules. Do not rely on general model memory for
 `1040-NR` details when this file applies.
 
 When the case is on the `1040-NR` path, also load
-[FORM_1040_NR_2025_DELTAS.md](/home/appuser/tax/workspace/FORM_1040_NR_2025_DELTAS.md)
+[FORM_1040_NR_2025_DELTAS.md](./FORM_1040_NR_2025_DELTAS.md)
 for the narrow 2025 deltas and unsupported-topic routing.
 
 ## Supported 2025 Scope

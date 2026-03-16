@@ -57,12 +57,12 @@ Do not silently file around these issues.
 
 When triggered on the nonresident path, also load:
 
-- [SCHEDULE_1A_2025.md](/home/appuser/tax/workspace/SCHEDULE_1A_2025.md)
-- [CHILD_CREDITS_2025.md](/home/appuser/tax/workspace/CHILD_CREDITS_2025.md)
-- [FORM_1099_DA.md](/home/appuser/tax/workspace/FORM_1099_DA.md)
-- [FORM_1099_K_2025.md](/home/appuser/tax/workspace/FORM_1099_K_2025.md)
+- [SCHEDULE_1A_2025.md](./SCHEDULE_1A_2025.md)
+- [CHILD_CREDITS_2025.md](./CHILD_CREDITS_2025.md)
+- [FORM_1099_DA.md](./FORM_1099_DA.md)
+- [FORM_1099_K_2025.md](./FORM_1099_K_2025.md)
 
 ## Source Pointers
 
-- [FORM_1040_NR.md](/home/appuser/tax/workspace/FORM_1040_NR.md)
-- [1040nr-whatsnew.md](/home/appuser/tax/workspace/1040nr-whatsnew.md)
+- [FORM_1040_NR.md](./FORM_1040_NR.md)
+- [1040nr-whatsnew.md](./1040nr-whatsnew.md)

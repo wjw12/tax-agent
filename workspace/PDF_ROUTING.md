@@ -127,12 +127,13 @@ Fidelity, Moomoo, and Morgan Stanley statements.
 
 ## API Processing
 
-Use the shared tax-server API for live work:
+Use the shared tax-server API for extraction runs that write into
+`workspace/cases/<case-id>/`:
 
 ```bash
 uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api \
-  --input-dir /home/appuser/tax/workspace/cases/case-001/sessions/session-001/source-pdfs \
-  --output-dir /home/appuser/tax/workspace/cases/case-001/source-sets/source-set-001/extraction
+  --input-dir ./workspace/cases/case-001/sessions/session-001/source-pdfs \
+  --output-dir ./workspace/cases/case-001/source-sets/source-set-001/extraction
 ```
 
 Disable the server-managed Mistral fallback only when you need a stricter
@@ -140,8 +141,8 @@ baseline comparison:
 
 ```bash
 uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api \
-  --input-dir /home/appuser/tax/workspace/cases/case-001/sessions/session-001/source-pdfs \
-  --output-dir /home/appuser/tax/workspace/cases/case-001/source-sets/source-set-001/extraction \
+  --input-dir ./workspace/cases/case-001/sessions/session-001/source-pdfs \
+  --output-dir ./workspace/cases/case-001/source-sets/source-set-001/extraction \
   --disable-mistral-fallback
 ```
 
@@ -277,7 +278,7 @@ There are **two different schemas** in this workflow.
 
 #### 1. Final form payload
 
-For live taxpayer work, this is written to:
+For payloads saved under `workspace/cases/<case-id>/`, this is written to:
 
 `workspace/cases/<case-id>/data/input/<tax-year>/<form>.json`
 
@@ -291,12 +292,12 @@ Rules:
 - Extra keys not declared by the model are FORBIDDEN
 
 Examples already present in `data/input/2025/*.json` are reference samples for
-shape only. They are not the default destination for live case output and
-should not be overwritten.
+shape only. They are not the default destination for output under
+`workspace/cases/<case-id>/` and should not be overwritten.
 
 #### 2. Audit sidecar
 
-This is written next to the live case form payload:
+This is written next to the form payload under `workspace/cases/<case-id>/`:
 
 `workspace/cases/<case-id>/data/input/<tax-year>/<form>.audit.json`
 
@@ -346,6 +347,11 @@ Every numeric value in the final form payload must point to one of:
 - a Python computation trace built from previously accepted source entries
 
 LLM-only guesses are never acceptable for numeric tax values.
+That computation trace must come from Python code, and the code must import and
+depend on the relevant modules under `src/` whenever repo code exists for the
+calculation.
+Any agent-authored Python file used for that computation must be stored under
+`scripts/`.
 If a registered processor exists for the form, derived values MUST come from
 that executable path rather than from hand-written arithmetic.
 

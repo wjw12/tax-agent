@@ -25,7 +25,8 @@ The review sub-agent sits after extraction and before PDF filling.
 
 Its job is narrow:
 
-- read extracted form payloads and audit sidecars from the active case folder
+- read extracted form payloads and audit sidecars under
+  `workspace/cases/<case-id>/`
 - verify source traceability
 - verify arithmetic and internal consistency
 - verify cross-form continuity for the supported return
@@ -72,7 +73,8 @@ Primary inputs:
   `workspace/cases/<case-id>/source-sets/<source-set-id>/extraction/`
 - source-set manifests under
   `workspace/cases/<case-id>/source-sets/<source-set-id>/manifest.json`
-- prior audit findings for the same live case when present
+- prior audit findings for the same `workspace/cases/<case-id>/` folder when
+  present
 
 Optional session input when still available:
 
@@ -221,6 +223,9 @@ For every derived figure in the payload or audit sidecar:
 - recompute the result independently
 - compare computed value to reported value
 - record the delta when they differ
+- run the recomputation in Python and import the relevant modules under `src/`
+  whenever repo code exists for the calculation
+- put any agent-authored Python files used for that recomputation in `scripts/`
 - treat `src/registry.py` and `src/processors.py` as the EXECUTABLE CONTRACT
   for registered forms
 
@@ -259,8 +264,9 @@ payloads agree with each other and with the final filed flow.
 
 If a value is internally correct on one schedule but fails downstream to the
 next form, that is still an audit finding.
-If a live payload omits explicit top-level fields required by the model, that
-is also an audit finding even when defaults would have produced a number.
+If a payload under `workspace/cases/<case-id>/data/input/<tax-year>/` omits
+explicit top-level fields required by the model, that is also an audit finding
+even when defaults would have produced a number.
 
 ---
 
@@ -481,7 +487,7 @@ Recommended report sections:
 4. Open items and whether they are critical or non-critical
 5. Status and next handoff
 
-Recommended live-case output locations:
+Recommended output locations under `workspace/cases/<case-id>/`:
 
 - `workspace/cases/<case-id>/audit/`
 - `workspace/cases/<case-id>/data/input/<tax-year>/<form>.audit.json`

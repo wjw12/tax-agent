@@ -60,10 +60,10 @@ Do not rely on prompt text or general model memory for those amounts.
 ## Nonresident Interaction
 
 If the case is on the `1040-NR` path, also load
-[FORM_1040_NR_2025_DELTAS.md](/home/appuser/tax/workspace/FORM_1040_NR_2025_DELTAS.md).
+[FORM_1040_NR_2025_DELTAS.md](./FORM_1040_NR_2025_DELTAS.md).
 Nonresident aliens generally cannot claim the qualified passenger vehicle loan
 interest deduction.
 
 ## Source Pointers
 
-- [i1040gi-whatsnew.md](/home/appuser/tax/workspace/i1040gi-whatsnew.md)
+- [i1040gi-whatsnew.md](./i1040gi-whatsnew.md)

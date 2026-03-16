@@ -46,10 +46,10 @@ For tax year 2025, identity timing changed and it can change the credit result.
 
 ## Constants Source
 
-Use [tax_constants_2025.py](/home/appuser/tax/src/tax_constants_2025.py) as
+Use [tax_constants_2025.py](../src/tax_constants_2025.py) as
 the structured source of truth for 2025 child-credit amounts and thresholds.
 
 ## Source Pointers
 
-- [instructions-8862.md](/home/appuser/tax/workspace/instructions-8862.md)
-- [i1040gi-whatsnew.md](/home/appuser/tax/workspace/i1040gi-whatsnew.md)
+- [instructions-8862.md](./instructions-8862.md)
+- [i1040gi-whatsnew.md](./i1040gi-whatsnew.md)

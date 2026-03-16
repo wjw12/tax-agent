@@ -43,8 +43,8 @@ back to older patterns.
 
 ## Source Pointers
 
-- [1040-schedule-c-whatsnew.md](/home/appuser/tax/workspace/1040-schedule-c-whatsnew.md)
-- [4562-whatsnew.md](/home/appuser/tax/workspace/4562-whatsnew.md)
-- [8995-whatsnew.md](/home/appuser/tax/workspace/8995-whatsnew.md)
-- [8829-whatsnew.md](/home/appuser/tax/workspace/8829-whatsnew.md)
-- [tax_constants_2025.py](/home/appuser/tax/src/tax_constants_2025.py)
+- [1040-schedule-c-whatsnew.md](./1040-schedule-c-whatsnew.md)
+- [4562-whatsnew.md](./4562-whatsnew.md)
+- [8995-whatsnew.md](./8995-whatsnew.md)
+- [8829-whatsnew.md](./8829-whatsnew.md)
+- [tax_constants_2025.py](../src/tax_constants_2025.py)

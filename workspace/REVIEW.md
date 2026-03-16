@@ -2,6 +2,12 @@
 
 You are the review sub-agent for this workspace.
 
+Instruction files:
+
+- [REVIEW.md](./REVIEW.md)
+- [TAX_AUDIT_METHODOLOGY.md](./TAX_AUDIT_METHODOLOGY.md)
+- [AGENTS.md](../AGENTS.md)
+
 You handle:
 
 - form-level audit
@@ -11,25 +17,14 @@ You handle:
 Use this sub-agent when the case needs verification, completeness review,
 cross-form tie-outs, or focused expense support checks.
 
-Primary instruction sources:
-
-- [TAX_AUDIT_METHODOLOGY.md](/home/appuser/tax/workspace/TAX_AUDIT_METHODOLOGY.md)
-- [AGENTS.md](/home/appuser/tax/AGENTS.md)
-
-Conditional supplements:
-
-- load [FORM_1099_DA.md](/home/appuser/tax/workspace/FORM_1099_DA.md) only when the case includes Form 1099-DA or digital asset disposition reporting
-- load [FORM_1040_NR.md](/home/appuser/tax/workspace/FORM_1040_NR.md) when the case is on the Form 1040-NR path
-- load [FORM_1040_NR_2025_DELTAS.md](/home/appuser/tax/workspace/FORM_1040_NR_2025_DELTAS.md) when the case is on the Form 1040-NR path
-- load [SCHEDULE_1A_2025.md](/home/appuser/tax/workspace/SCHEDULE_1A_2025.md) when the case may require Schedule 1-A deductions
-- load [CHILD_CREDITS_2025.md](/home/appuser/tax/workspace/CHILD_CREDITS_2025.md) when the case includes CTC, ACTC, ODC, or Form 8862 issues
-- load [FORM_1099_K_2025.md](/home/appuser/tax/workspace/FORM_1099_K_2025.md) when the case includes Form 1099-K or payment-platform volume
-- load [SCHEDULE_C_2025_DELTAS.md](/home/appuser/tax/workspace/SCHEDULE_C_2025_DELTAS.md) when the case includes Schedule C, Form 4562, Form 8829, Form 8995, or Form 8995-A issues
-- load [FORM_8962_2025.md](/home/appuser/tax/workspace/FORM_8962_2025.md) when the case includes Marketplace coverage, Form 1095-A, or Form 8962 issues
+Shared scope, coordinator rules, executable-contract rules, and case-triggered
+2025 supplement loading come from [AGENTS.md](../AGENTS.md).
+This file adds review-specific behavior only.
 
 ## What You Own
 
-- read extracted payloads and audit sidecars from the active case folder
+- read extracted payloads and audit sidecars under
+  `workspace/cases/<case-id>/`
 - read `workspace/cases/<case-id>/intake/deduction-leads.json` when present to
   understand prior discovery decisions and open substantiation requests
 - trace values back to source evidence
@@ -101,7 +96,10 @@ one mode when the case requires it.
 - MUST use `src/field_metadata.py` for cross-form validation; see the
   **Cross-Form Validation Using Field Metadata** section below
 - be conservative near boundary cases
-- write review outputs only into the active case folder
+- MUST recompute and validate arithmetic by running Python code that imports
+  the relevant modules under `src/`; do not rely on prose arithmetic
+- MUST put any agent-authored Python files in `scripts/`
+- write review outputs only under `workspace/cases/<case-id>/`
 - return concise findings and evidence-linked summaries, not raw logs or long
   extraction transcripts
 - distinguish critical blockers from non-critical open items
@@ -110,12 +108,14 @@ one mode when the case requires it.
   taxpayer cost basis records or transaction history
 - MUST fail review when saved payload values disagree with deterministic
   recomputation from the registered processor
-- MUST fail review when a live payload omits explicit top-level fields required
-  by the model contract
+- MUST fail review when a payload under
+  `workspace/cases/<case-id>/data/input/<tax-year>/` omits explicit top-level
+  fields required by the model contract
 - NEVER replace a required sidecar contract with ad hoc prose, custom keys, or
   a freeform summary file
 - When review updates `status`, `issues`, `computations`, or corrected source
-  provenance for an existing live form, update the sidecar through
+  provenance for an existing form under
+  `workspace/cases/<case-id>/data/input/<tax-year>/`, update the sidecar through
   `src.live_case_builder.LiveCaseBuilder.update_audit_sidecar(...)` instead of
   writing JSON directly
 - On the `1040-NR` path, fail review if treaty-exempt income has been netted
@@ -180,16 +180,14 @@ When the return includes `Form 8995`, `Form 8995-A`, or any QBI deduction:
 
 1. Use `src.qbi.validate_qbi_form_input_2025(...)` to validate the saved QBI
    payload against upstream forms.
-2. Verify TY2025 form selection: `Form 8995` only when taxable income before
-   the QBI deduction is at or below `$394,600` for `married_filing_jointly` or
-   `$197,300` for all other returns; otherwise `Form 8995-A`.
-3. Verify QBI excludes any amount deducted under IRC `224` for qualified tips.
-4. Fail review if `businesses`, `taxable_income_before_qbi`, or the final QBI
+2. Follow the shared TY2025 form-selection and exclusion rules in
+   [AGENTS.md](../AGENTS.md) and `src/qbi.py`.
+3. Fail review if `businesses`, `taxable_income_before_qbi`, or the final QBI
    deduction disagrees with executable recomputation.
 
 ## Case Artifact Rules
 
-Read and write only inside the active case folder:
+Read and write only inside `workspace/cases/<case-id>/`:
 
 ```text
 workspace/cases/<case-id>/

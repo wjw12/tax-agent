@@ -39,7 +39,7 @@ def _allow_live_case_input_writes():
 def _ensure_write_allowed(path: Path) -> None:
     if _is_live_case_input_path(path) and not _LIVE_CASE_INPUT_WRITE_ENABLED.get():
         raise ValueError(
-            "Direct writes to live case input artifacts are not allowed; "
+            "Direct writes to case input artifacts are not allowed; "
             "use src.live_case_builder.LiveCaseBuilder"
         )
 

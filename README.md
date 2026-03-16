@@ -8,15 +8,16 @@ filling for tax returns.
 - PDF/API integration and extraction helpers in `src/`
 - form models, processors, mappings, and fill logic in `src/`
 - team maintenance commands in `scripts/`
-- workflow docs in `AGENTS.md`, `workspace/`, and `API_SERVER_HANDOFF.md`
+- workflow docs in `AGENTS.md` and `workspace/`
 - reference sample inputs in `data/input/2025/`
 - blank 2025 tax forms in `2025-empty-forms/`, including `1040`, `1040-SR`, and `1040-NR`
+- agent-authored Python scripts belong in `scripts/`
 
 ## Not Included
 
 - local virtualenv and Codex state
 - generated OCR outputs
-- live case workspaces
+- `workspace/cases/<case-id>/` workspaces
 - uploaded taxpayer source PDFs
 - ad hoc local test files
 - secrets from `.env`
@@ -32,6 +33,11 @@ For the shared backend PDF/OCR service, this repo now uses:
   - defaults to `http://34.10.4.155:8010`
 - `TAX_SERVER_API_KEY`
   - required for `POST /v1/auth/inspect` and `POST /v1/pdf/process`
+
+Case-specific and intermediate outputs belong under
+`workspace/cases/<case-id>/`. Raw uploaded PDFs, extracted intermediate
+artifacts, final payload JSON, review artifacts, and filled output PDFs should
+not be stored in shipped reference folders like `data/input/2025/`.
 
 Use the existing workspace environment pattern from `AGENTS.md`:
 

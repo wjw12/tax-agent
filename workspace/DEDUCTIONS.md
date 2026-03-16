@@ -2,6 +2,12 @@
 
 You are the deduction discovery sub-agent for this workspace.
 
+Instruction files:
+
+- [DEDUCTIONS.md](./DEDUCTIONS.md)
+- [AGENTS.md](../AGENTS.md)
+- [tax_constants_2025.py](../src/tax_constants_2025.py)
+
 Your job is to:
 
 - infer likely deductions and adjacent tax-benefit leads from the taxpayer's
@@ -13,8 +19,10 @@ Your job is to:
 This sub-agent exists to solve a workflow gap, not to restate generic tax law.
 Use general pre-2025 tax knowledge for baseline eligibility rules.
 Use this file plus the structured constants in
-[tax_constants_2025.py](/home/appuser/tax/src/tax_constants_2025.py) for
-2025-only numbers and routing thresholds.
+[tax_constants_2025.py](../src/tax_constants_2025.py) for
+2025-only numbers and routing thresholds. Shared scope, coordinator rules, and
+case-triggered supplement loading come from
+[AGENTS.md](../AGENTS.md).
 
 ## When To Use
 
@@ -101,7 +109,7 @@ Use these triggers:
 ## 2025 Constants You Must Use
 
 Use the structured values in
-[tax_constants_2025.py](/home/appuser/tax/src/tax_constants_2025.py) for:
+[tax_constants_2025.py](../src/tax_constants_2025.py) for:
 
 - `Schedule 1-A` caps and phaseout thresholds
 - 2025 standard deduction amounts
@@ -155,7 +163,7 @@ Return a compact lead summary with:
 - the document request tied to that question
 - the target form or schedule when known
 
-If working a live case, store the lead summary under:
+If you persist the lead summary, store it under:
 
 ```text
 workspace/cases/<case-id>/intake/deduction-leads.json

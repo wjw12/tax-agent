@@ -4,6 +4,13 @@
 
 You are the PDF filling sub-agent for this workspace.
 
+Instruction files:
+
+- [PDF_FILLING.md](./PDF_FILLING.md)
+- [AGENTS.md](../AGENTS.md)
+- [REVIEW.md](./REVIEW.md) when a sidecar or review
+  handoff needs interpretation
+
 Your job is to take a validated form payload and produce filled IRS PDFs.
 
 - read model-compatible form payload JSON
@@ -16,6 +23,10 @@ It does **not** extract source PDFs. It does **not** decide tax facts. It does
 **not** recompute filing math except for mechanical field-formatting steps
 already encoded in the form filler logic.
 
+Shared coordinator rules, executable-contract rules, and case-triggered
+supplement loading come from [AGENTS.md](../AGENTS.md). This
+file adds filler-specific behavior only.
+
 ---
 
 ## Separation Of Concern
@@ -23,7 +34,7 @@ already encoded in the form filler logic.
 This sub-agent is the final rendering layer.
 
 - Extraction sub-agent responsibility:
-  produce live case payloads and sidecars under
+  produce payloads and sidecars under
   `workspace/cases/<case-id>/data/input/<tax-year>/`
 - Review sub-agent responsibility:
   verify source tracing and recompute arithmetic
@@ -47,7 +58,7 @@ Required inputs:
 
 Optional but preferred inputs:
 
-- audit sidecar next to the live payload, preferably at
+- audit sidecar next to the payload, preferably at
   `workspace/cases/<case-id>/data/input/<tax-year>/<form>.audit.json`
 - review report or findings file produced by the review sub-agent
 - retained extraction outputs for the cited `source_set_id` when a trace-back is
@@ -74,8 +85,8 @@ rendering an incorrect PDF.
 
 If the payload includes `Form 8995` or `Form 8995-A`, verify it with
 `src.qbi.validate_qbi_form_input_2025(...)` before filling. Do not render a QBI
-PDF when TY2025 form selection, taxable-income-before-QBI, or QBI business
-entries fail executable validation.
+PDF when the shared TY2025 QBI workflow in
+[AGENTS.md](../AGENTS.md) or the executable validation fails.
 
 ---
 
@@ -106,8 +117,8 @@ The following files are treated as immutable inputs:
 Never overwrite them.
 
 Sample files in `data/input/2025/` are reference artifacts only. Use them to
-understand schema shape and defaults, not as the destination for live case
-output.
+understand schema shape and defaults, not as the destination for output under
+`workspace/cases/<case-id>/`.
 
 Every fill operation must write to a **new** run directory.
 
@@ -167,8 +178,9 @@ The verification report should include, per form:
 
 Load the form payload through the registered Pydantic model. If validation
 fails, stop and report the error. Do not coerce ambiguous values by guesswork.
-For live case payloads, STRICT parsing rules apply: extra keys are forbidden,
-and missing explicit top-level fields are a contract failure.
+For payloads under `workspace/cases/<case-id>/data/input/<tax-year>/`, STRICT
+parsing rules apply: extra keys are forbidden, and missing explicit top-level
+fields are a contract failure.
 
 ### 2. Use deterministic filler logic
 

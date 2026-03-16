@@ -120,5 +120,5 @@ Better:
 
 Load only if needed:
 
-- [broker-reporting-faq.md](/home/appuser/tax/workspace/broker-reporting-faq.md)
-- [understanding-1099da.md](/home/appuser/tax/workspace/understanding-1099da.md)
+- [broker-reporting-faq.md](./broker-reporting-faq.md)
+- [understanding-1099da.md](./understanding-1099da.md)

@@ -2,9 +2,18 @@
 
 You are the extraction sub-agent for this workspace.
 
+Instruction files:
+
+- [EXTRACTOR.md](./EXTRACTOR.md)
+- [AGENTS.md](../AGENTS.md)
+- [PDF_ROUTING.md](./PDF_ROUTING.md)
+- [DEDUCTIONS.md](./DEDUCTIONS.md) when
+  `workspace/cases/<case-id>/intake/deduction-leads.json` already exists
+
 Your job is to:
 
-- read taxpayer source PDFs from the active case folder
+- read taxpayer source PDFs from
+  `workspace/cases/<case-id>/sessions/<session-id>/source-pdfs/`
 - read `workspace/cases/<case-id>/intake/deduction-leads.json` when present as
   taxpayer-fact input
 - classify and route pages to the right extractor
@@ -12,23 +21,9 @@ Your job is to:
 - produce matching `.audit.json` sidecars with source evidence and issues
 - write durable extraction artifacts for the active `source_set_id`
 
-Primary instruction sources:
-
-- [AGENTS.md](/home/appuser/tax/AGENTS.md)
-- [PDF_ROUTING.md](/home/appuser/tax/workspace/PDF_ROUTING.md)
-- [DEDUCTIONS.md](/home/appuser/tax/workspace/DEDUCTIONS.md) when a live case
-  already has deduction-discovery outputs
-
-Conditional supplements:
-
-- load [FORM_1099_DA.md](/home/appuser/tax/workspace/FORM_1099_DA.md) only when the case includes Form 1099-DA or digital asset disposition reporting
-- load [FORM_1040_NR.md](/home/appuser/tax/workspace/FORM_1040_NR.md) when the source set is part of a Form 1040-NR case
-- load [FORM_1040_NR_2025_DELTAS.md](/home/appuser/tax/workspace/FORM_1040_NR_2025_DELTAS.md) when the source set is part of a Form 1040-NR case
-- load [SCHEDULE_1A_2025.md](/home/appuser/tax/workspace/SCHEDULE_1A_2025.md) when the source set or taxpayer facts suggest qualified tips, qualified overtime compensation, qualified passenger vehicle loan interest, or the enhanced deduction for seniors
-- load [CHILD_CREDITS_2025.md](/home/appuser/tax/workspace/CHILD_CREDITS_2025.md) when the source set includes dependent-credit materials, Schedule 8812 issues, or Form 8862 issues
-- load [FORM_1099_K_2025.md](/home/appuser/tax/workspace/FORM_1099_K_2025.md) when the source set includes Form 1099-K or payment-platform statements
-- load [SCHEDULE_C_2025_DELTAS.md](/home/appuser/tax/workspace/SCHEDULE_C_2025_DELTAS.md) when the source set includes Schedule C, Form 4562, Form 8829, Form 8995, or Form 8995-A issues
-- load [FORM_8962_2025.md](/home/appuser/tax/workspace/FORM_8962_2025.md) when the source set includes Marketplace coverage, Form 1095-A, or Form 8962 issues
+Shared scope, coordinator rules, executable-contract rules, and case-triggered
+2025 supplement loading come from [AGENTS.md](../AGENTS.md).
+This file adds extraction-specific behavior only.
 
 ## Required Behavior
 
@@ -40,9 +35,12 @@ Conditional supplements:
 - MUST consult `src/field_metadata.py` before constructing any form payload;
   see the detailed rules in `AGENTS.md` under **Field Metadata And Inter-Form
   Wiring**
-- MUST use `src/qbi.py` when the active case includes `Form 8995`,
-  `Form 8995-A`, or QBI analysis
-- write only into the active case folder under `workspace/cases/<case-id>/`
+- MUST use `src/qbi.py` when the case includes `Form 8995`, `Form 8995-A`, or
+  QBI analysis
+- MUST perform calculations by running Python code that imports the relevant
+  modules under `src/`; do not rely on prose arithmetic
+- MUST put any agent-authored Python files in `scripts/`
+- write only under `workspace/cases/<case-id>/`
 - never overwrite sample files under `data/input/2025/` or blank forms
 - do not fill IRS PDFs
 - do not perform final audit judgment beyond extraction-level validation
@@ -57,11 +55,12 @@ Conditional supplements:
   agent can decide whether to proceed
 - if digital asset cost basis is not present in the source set, flag it as a
   missing fact and ask for taxpayer records rather than assuming a basis value
-- MUST write EVERY top-level form field explicitly in live payload JSON, even
-  when the value is `0`, `null`, `false`, or `[]`
+- MUST write EVERY top-level form field explicitly in payload JSON saved under
+  `workspace/cases/<case-id>/data/input/<tax-year>/`, even when the value is
+  `0`, `null`, `false`, or `[]`
 - MUST keep `status`, `sources`, `computations`, and `issues` in the
   `.audit.json` sidecar rather than the payload root
-- MUST write live payload and sidecar artifacts under
+- MUST write payload and sidecar artifacts under
   `workspace/cases/<case-id>/data/input/<tax-year>/` through
   `src.live_case_builder.LiveCaseBuilder`; do not write those files with raw
   `json.dumps(...)`, `Path.write_text(...)`, or direct `write_json_artifact(...)`
@@ -113,17 +112,16 @@ another QBI issue:
 1. Use `src.qbi.build_qbi_form_input_2025(...)` or
    `src.qbi.build_qbi_business_assembly_from_forms(...)` to assemble QBI
    payload inputs.
-2. For TY2025, select `Form 8995` only when taxable income before the QBI
-   deduction is at or below `$394,600` for `married_filing_jointly` or
-   `$197,300` for all other returns. Otherwise use `Form 8995-A`.
-3. Exclude amounts deducted under IRC `224` for qualified tips from QBI.
-4. Do not hand-author `businesses` or `taxable_income_before_qbi` without the
+2. Follow the shared TY2025 form-selection and exclusion rules in
+   [AGENTS.md](../AGENTS.md) and `src/qbi.py`.
+3. Do not hand-author `businesses` or `taxable_income_before_qbi` without the
    executable QBI helper path.
 
 ## Case Artifact Rules
 
 Examples in `data/input/2025/` and blank forms in `2025-empty-forms/` are
-reference artifacts, not live case outputs.
+reference artifacts, not case-specific outputs saved under
+`workspace/cases/<case-id>/`.
 
 Do not overwrite:
 
@@ -132,7 +130,7 @@ Do not overwrite:
 - `2025-empty-forms/*.pdf`
 - previous run outputs in `workspace/`
 
-For real taxpayer work, use:
+For intermediate and case-specific outputs, use:
 
 ```text
 workspace/cases/<case-id>/
@@ -186,8 +184,9 @@ other sub-agents unless a specific mismatch requires it.
   as the default PDF extraction path.
 - The tax-server API is the source of truth for routed extraction
   (`pdfplumber`, `tesseract`, `gmft`, and API-managed Mistral fallback).
-- Always pass `--input-dir` and `--output-dir` for live work.
-- For live work, read raw PDFs from the active session folder and write API
+- Always pass `--input-dir` and `--output-dir` for extraction runs that write
+  into `workspace/cases/<case-id>/`.
+- For those runs, read raw PDFs from the active session folder and write API
   routing JSON into `source-sets/<source-set-id>/extraction/`.
 - Do not persist raw PDFs as durable case artifacts unless the product
   retention policy explicitly changes.

@@ -1,4 +1,4 @@
-"""Canonical writer for live case payloads and audit sidecars."""
+"""Canonical writer for case payloads and audit sidecars."""
 
 from __future__ import annotations
 
@@ -69,7 +69,7 @@ def _normalize_runtime_result(
 
 
 class LiveCaseBuilder:
-    """Write validated live-case form artifacts into a case input directory."""
+    """Write validated form artifacts into a case input directory."""
 
     def __init__(self, case_root: str | Path, *, tax_year: int = 2025) -> None:
         self.case_root = Path(case_root)

@@ -37,41 +37,41 @@ Use this response structure when helpful:
 4. Next step
 
 If the case includes Form 1099-DA or digital asset dispositions, load
-[FORM_1099_DA.md](/home/appuser/tax/workspace/FORM_1099_DA.md) before asking
+[FORM_1099_DA.md](./workspace/FORM_1099_DA.md) before asking
 follow-up questions or making supportability decisions about those items.
 
 If the taxpayer may need Form 1040-NR, or if U.S. tax residency for 2025 is
-unclear, load [FORM_1040_NR.md](/home/appuser/tax/workspace/FORM_1040_NR.md)
+unclear, load [FORM_1040_NR.md](./workspace/FORM_1040_NR.md)
 before deciding supportability or asking document-specific nonresident
 questions.
 
 If the case may involve the new 2025 `Schedule 1-A` deductions, load
-[SCHEDULE_1A_2025.md](/home/appuser/tax/workspace/SCHEDULE_1A_2025.md) before
+[SCHEDULE_1A_2025.md](./workspace/SCHEDULE_1A_2025.md) before
 routing tips, overtime, passenger-vehicle loan interest, or senior-deduction
 facts.
 
 If the case may involve `CTC`, `ACTC`, `ODC`, or `Form 8862`, load
-[CHILD_CREDITS_2025.md](/home/appuser/tax/workspace/CHILD_CREDITS_2025.md)
+[CHILD_CREDITS_2025.md](./workspace/CHILD_CREDITS_2025.md)
 before deciding credit eligibility or asking identity-document questions.
 
 If the source set includes `Form 1099-K` or payment-platform volume, load
-[FORM_1099_K_2025.md](/home/appuser/tax/workspace/FORM_1099_K_2025.md) before
+[FORM_1099_K_2025.md](./workspace/FORM_1099_K_2025.md) before
 treating the gross amount as taxable business income.
 
 If the case includes `Schedule C`, `Form 4562`, `Form 8829`, `Form 8995`,
 `Form 8995-A`, or mixed-use vehicle/home-office issues, load
-[SCHEDULE_C_2025_DELTAS.md](/home/appuser/tax/workspace/SCHEDULE_C_2025_DELTAS.md)
+[SCHEDULE_C_2025_DELTAS.md](./workspace/SCHEDULE_C_2025_DELTAS.md)
 before deciding the 2025 routing and review rules.
 
 If the case includes `Marketplace` coverage, `Form 1095-A`, or `Form 8962`,
-load [FORM_8962_2025.md](/home/appuser/tax/workspace/FORM_8962_2025.md)
+load [FORM_8962_2025.md](./workspace/FORM_8962_2025.md)
 before treating the case as missing coverage documents.
 
 If the filing path is clear and the case is still supported, load
-[DEDUCTIONS.md](/home/appuser/tax/workspace/DEDUCTIONS.md) before document
+[DEDUCTIONS.md](./workspace/DEDUCTIONS.md) before document
 extraction to infer likely deductions and other common tax-benefit leads from
 the taxpayer profile. Use
-[tax_constants_2025.py](/home/appuser/tax/src/tax_constants_2025.py) as the
+[tax_constants_2025.py](./src/tax_constants_2025.py) as the
 structured source of truth for 2025 amounts and thresholds instead of copying
 those numbers into freeform prompt prose.
 
@@ -89,7 +89,7 @@ The system supports relatively straightforward individual returns, including:
 - Schedule C self-employment / freelancer income
 - basic Schedule E rental real estate
 - federal filing, including selected Form 1040-NR cases documented in
-  [FORM_1040_NR.md](/home/appuser/tax/workspace/FORM_1040_NR.md)
+  [FORM_1040_NR.md](./workspace/FORM_1040_NR.md)
 - supported state filing
 
 The system does not support:
@@ -142,13 +142,15 @@ For every new 2025 case, collect these facts before moving deeper:
 5. Core document set:
    W-2, 1099 series, 1042-S, 1098, K-1, brokerage gain/loss reports, and business/rental records as applicable
 
+User can opt to skip sensitive personal data and in that case, remind the user that they need to fill in the data manually in the final PDFs after the final PDFs are prepared.
+
 Use the answers to branch immediately:
 
 - If the taxpayer is a U.S. citizen or resident alien for 2025, continue on the
   Form 1040 path.
 - If the taxpayer is a nonresident alien for 2025, continue on the Form 1040-NR
-  path and use [FORM_1040_NR.md](/home/appuser/tax/workspace/FORM_1040_NR.md)
-  and [FORM_1040_NR_2025_DELTAS.md](/home/appuser/tax/workspace/FORM_1040_NR_2025_DELTAS.md)
+  path and use [FORM_1040_NR.md](./workspace/FORM_1040_NR.md)
+  and [FORM_1040_NR_2025_DELTAS.md](./workspace/FORM_1040_NR_2025_DELTAS.md)
   as the source of truth for scope, questions, and 2025-specific rules.
 - If the taxpayer is dual-status, is considering a resident election, or cannot
   explain their residency facts well enough to determine the correct path,
@@ -171,25 +173,55 @@ Before extraction, run a deduction-discovery pass:
 - request the minimum supporting records tied to each likely item
 - do not assume an item is absent just because a source form has not been
   uploaded yet
-- if working a live case, persist the result in
+- if you persist the result, save it in
   `workspace/cases/<case-id>/intake/deduction-leads.json`
 
 ## Coordinator Rules
 
 You are also the coordinator for specialized sub-agents with separate context.
 
-The sub-agents in this workspace are:
+Every sub-agent handoff MUST name and link the exact instruction file or files
+to load. Do not refer only to "the extractor" or "the reviewer"; include the
+file paths directly so Claude Code, Codex, and similar terminal agents can open
+the right instructions without guessing.
 
-- deduction discovery sub-agent
-- extraction sub-agent
-- review sub-agent
-- PDF filling sub-agent
+Sub-agent registry:
+
+- deduction discovery sub-agent:
+  [DEDUCTIONS.md](./workspace/DEDUCTIONS.md)
+- extraction sub-agent:
+  [EXTRACTOR.md](./workspace/EXTRACTOR.md) and
+  [PDF_ROUTING.md](./workspace/PDF_ROUTING.md)
+- review sub-agent:
+  [REVIEW.md](./workspace/REVIEW.md) and
+  [TAX_AUDIT_METHODOLOGY.md](./workspace/TAX_AUDIT_METHODOLOGY.md)
+- PDF filling sub-agent:
+  [PDF_FILLING.md](./workspace/PDF_FILLING.md)
 
 Use sub-agents only for their narrow responsibilities.
 Keep the main thread focused on taxpayer facts, supportability decisions, and
 final user-facing outputs.
 Prefer concise evidence-linked summaries over raw logs, OCR chatter, or shell
 output.
+
+When a handoff depends on prior outputs or a triggered 2025 supplement:
+
+- include direct links to the case-specific artifact being relied on, such as
+  `workspace/cases/<case-id>/intake/deduction-leads.json`
+- include direct links to only the triggered supplement files, not the whole
+  supplement set:
+  [FORM_1099_DA.md](./workspace/FORM_1099_DA.md),
+  [SCHEDULE_1A_2025.md](./workspace/SCHEDULE_1A_2025.md),
+  [CHILD_CREDITS_2025.md](./workspace/CHILD_CREDITS_2025.md),
+  [FORM_1099_K_2025.md](./workspace/FORM_1099_K_2025.md),
+  [SCHEDULE_C_2025_DELTAS.md](./workspace/SCHEDULE_C_2025_DELTAS.md),
+  [FORM_8962_2025.md](./workspace/FORM_8962_2025.md),
+  [FORM_1040_NR.md](./workspace/FORM_1040_NR.md), and
+  [FORM_1040_NR_2025_DELTAS.md](./workspace/FORM_1040_NR_2025_DELTAS.md)
+- do not duplicate those documents inside prompts unless a short summary is
+  necessary
+- tell sub-agents to use progressive disclosure and to return concise summaries
+  rather than raw intermediate output
 
 The coordination loop is:
 
@@ -213,24 +245,71 @@ If source PDFs are added, removed, replaced, or corrected:
 If review status is `needs_review` or `blocked`, do not treat the return as
 ready for filing.
 
+## Case Artifact Layout
+
+Put all case-specific and intermediate artifacts under:
+
+```text
+workspace/cases/<case-id>/
+  active.json
+  intake/
+    deduction-leads.json
+  sessions/<session-id>/
+    source-pdfs/
+  source-sets/<source-set-id>/
+    manifest.json
+    extraction/
+      process-manifest.json
+      <pdf-stem>.routing.json
+      <pdf-stem>.error.json
+  data/input/<tax-year>/
+    <form>.json
+    <form>.audit.json
+  audit/
+  filled-forms/<tax-year>/<run-id>/
+```
+
+Rules:
+
+- `sessions/<session-id>/source-pdfs/` holds raw user-uploaded PDFs and is
+  ephemeral session storage
+- `intake/deduction-leads.json` holds deduction-discovery output when that
+  output is persisted
+- `source-sets/<source-set-id>/extraction/` holds durable intermediate
+  extraction artifacts and routing outputs
+- `data/input/<tax-year>/` holds final form payloads and matching
+  `.audit.json` sidecars
+- `audit/` holds review reports or return-level audit outputs
+- `filled-forms/<tax-year>/<run-id>/` holds generated PDF outputs and their run
+  manifests
+- do not write case-specific or intermediate artifacts into `data/input/2025/`
+  or `2025-empty-forms/`; those are shipped reference assets
+
 ## EXECUTABLE CONTRACT
 
-For ANY live case written under `workspace/cases/<case-id>/`, the EXECUTABLE
-CONTRACT in `workspace/PDF_ROUTING.md`, `src/models.py`, `src/registry.py`,
-`src/processors.py`, `src/pdf_fillers.py`, `src/pdf_mapping.py`, and
+For ANY intermediate output, payload, sidecar, audit artifact, or filled PDF
+written under `workspace/cases/<case-id>/`, the EXECUTABLE CONTRACT in
+`workspace/PDF_ROUTING.md`, `src/models.py`, `src/registry.py`,
+`src/processors.py`, `src/pdf_fillers.py`, `src/pdf_mapping.py`,
 `src/field_metadata.py`, and `src/qbi.py` MUST be followed.
 
 NON-NEGOTIABLE RULES:
 
 - MUST use the registered model, processor, and filler when a form exists in
   `src/registry.py`.
-- MUST derive computed filing values from the executable code path, not from
-  freehand arithmetic or prose reasoning.
-- MUST write live payload JSON with EVERY top-level model field explicitly
-  present, even when the value is `0`, `null`, `false`, or `[]`.
+- MUST derive computed filing values by running Python code, not from freehand
+  arithmetic or prose reasoning.
+- MUST write any agent-authored Python files under `scripts/`.
+- MUST have that Python code import and depend on the relevant modules under
+  `src/` whenever repo code exists for the calculation.
+- MUST save any intermediate output under `workspace/cases/<case-id>/`.
+- MUST write payload JSON under
+  `workspace/cases/<case-id>/data/input/<tax-year>/` with EVERY top-level
+  model field explicitly present, even when the value is `0`, `null`, `false`,
+  or `[]`.
 - MUST keep audit metadata in the `.audit.json` sidecar, not in the form
   payload root.
-- MUST write live case payloads and `.audit.json` sidecars under
+- MUST write payloads and `.audit.json` sidecars under
   `workspace/cases/<case-id>/data/input/<tax-year>/` through
   `src.live_case_builder.LiveCaseBuilder`; direct JSON writes to that directory
   are forbidden.
@@ -399,31 +478,6 @@ Use progressive disclosure to manage context efficiently.
 - Avoid carrying raw exploration notes forward when a short evidence-linked
   summary will do.
 
-## Sub-Agent Pattern
-
-When using sub-agents in this workspace:
-
-- Use [EXTRACTOR.md](/home/appuser/tax/workspace/EXTRACTOR.md) as the
-  extraction sub-agent instruction set.
-- Use [TAX_AUDIT_METHODOLOGY.md](/home/appuser/tax/workspace/TAX_AUDIT_METHODOLOGY.md)
-  as the verification procedure used by the review sub-agent.
-- Use [REVIEW.md](/home/appuser/tax/workspace/REVIEW.md) as the review
-  sub-agent instruction set.
-- Use [PDF_FILLING.md](/home/appuser/tax/workspace/PDF_FILLING.md) as the PDF
-  filling sub-agent instruction set.
-- Load specialized 2025 supplements only when their trigger facts appear:
-  [FORM_1099_DA.md](/home/appuser/tax/workspace/FORM_1099_DA.md),
-  [SCHEDULE_1A_2025.md](/home/appuser/tax/workspace/SCHEDULE_1A_2025.md),
-  [CHILD_CREDITS_2025.md](/home/appuser/tax/workspace/CHILD_CREDITS_2025.md),
-  [FORM_1099_K_2025.md](/home/appuser/tax/workspace/FORM_1099_K_2025.md),
-  [SCHEDULE_C_2025_DELTAS.md](/home/appuser/tax/workspace/SCHEDULE_C_2025_DELTAS.md),
-  [FORM_8962_2025.md](/home/appuser/tax/workspace/FORM_8962_2025.md), and
-  [FORM_1040_NR_2025_DELTAS.md](/home/appuser/tax/workspace/FORM_1040_NR_2025_DELTAS.md).
-- Do not duplicate those documents inside prompts unless a short summary is
-  necessary.
-- Tell sub-agents to use progressive disclosure and to return concise
-  summaries rather than raw intermediate output.
-
 ## Minimal Operating Rules
 
 - Treat persisted extracted JSON as the retained source of truth after raw PDF
@@ -434,6 +488,8 @@ When using sub-agents in this workspace:
 - Keep conclusions tied to saved artifacts, not memory.
 - Do not overwrite unrelated experiment outputs.
 - If the case is unsupported, say so early and stop building a filing workflow.
-- For live case payloads, use STRICT parsing rules. Extra keys are forbidden.
-- For live case payloads, missing explicit top-level fields are a CONTRACT
-  FAILURE, not a harmless default.
+- For payloads under `workspace/cases/<case-id>/data/input/<tax-year>/`, use
+  STRICT parsing rules. Extra keys are forbidden.
+- For payloads under `workspace/cases/<case-id>/data/input/<tax-year>/`,
+  missing explicit top-level fields are a CONTRACT FAILURE, not a harmless
+  default.

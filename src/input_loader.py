@@ -1,4 +1,4 @@
-"""Load reference or live JSON inputs and audit sidecars from disk."""
+"""Load reference or case JSON inputs and audit sidecars from disk."""
 
 from __future__ import annotations
 
