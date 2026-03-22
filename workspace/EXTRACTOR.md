@@ -184,6 +184,9 @@ other sub-agents unless a specific mismatch requires it.
   as the default PDF extraction path.
 - The tax-server API is the source of truth for routed extraction
   (`pdfplumber`, `tesseract`, `gmft`, and API-managed Mistral fallback).
+- Pass the purchased tax-server key with `--api-key` on extraction runs.
+- The target backend is fixed in code at `https://tax.heurist.xyz`.
+- Do not assume the shipped repo includes a local `.env` template for either value.
 - Always pass `--input-dir` and `--output-dir` for extraction runs that write
   into `workspace/cases/<case-id>/`.
 - For those runs, read raw PDFs from the active session folder and write API
@@ -195,6 +198,6 @@ other sub-agents unless a specific mismatch requires it.
 Examples:
 
 ```bash
-uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api --input-dir workspace/cases/case-001/sessions/session-001/source-pdfs --output-dir workspace/cases/case-001/source-sets/source-set-001/extraction
-uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api --input-dir workspace/cases/case-001/sessions/session-001/source-pdfs --output-dir workspace/cases/case-001/source-sets/source-set-001/extraction --disable-mistral-fallback
+uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api --api-key "<issued-tax-server-key>" --input-dir workspace/cases/case-001/sessions/session-001/source-pdfs --output-dir workspace/cases/case-001/source-sets/source-set-001/extraction
+uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api --api-key "<issued-tax-server-key>" --input-dir workspace/cases/case-001/sessions/session-001/source-pdfs --output-dir workspace/cases/case-001/source-sets/source-set-001/extraction --disable-mistral-fallback
 ```

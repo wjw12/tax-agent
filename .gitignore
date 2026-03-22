@@ -3,9 +3,9 @@
 # Local environment and tools
 .env
 .env.*
-!.env.example
 .venv/
 .codex/
+.factory/
 
 # Python cache and tooling
 __pycache__/
@@ -39,3 +39,5 @@ tmp/
 /uv.lock
 
 settings.json
+
+AGENTS.override.md

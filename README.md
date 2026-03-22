@@ -1,69 +1,105 @@
 # Tax Agent
 
-Tax workflow workspace for local extraction review, audit, and deterministic PDF
-filling for tax returns.
+This repo is the shipped local source package for the tax filing agent system.
 
-## Included
+For the broader architecture, see:
 
-- PDF/API integration and extraction helpers in `src/`
-- form models, processors, mappings, and fill logic in `src/`
-- team maintenance commands in `scripts/`
-- workflow docs in `AGENTS.md` and `workspace/`
-- reference sample inputs in `data/input/2025/`
-- blank 2025 tax forms in `2025-empty-forms/`, including `1040`, `1040-SR`, and `1040-NR`
-- agent-authored Python scripts belong in `scripts/`
+- [/home/appuser/tax-frontend/docs/system-masterdoc.md](/home/appuser/tax-frontend/docs/system-masterdoc.md)
 
-## Not Included
+## What This Repo Contains
 
-- local virtualenv and Codex state
-- generated OCR outputs
-- `workspace/cases/<case-id>/` workspaces
-- uploaded taxpayer source PDFs
-- ad hoc local test files
-- secrets from `.env`
+- customer-facing instructions in [/home/appuser/tax/AGENTS.md](/home/appuser/tax/AGENTS.md)
+- sub-agent instructions in [/home/appuser/tax/workspace](/home/appuser/tax/workspace)
+- deterministic form models, processors, registry wiring, and PDF fill logic in [/home/appuser/tax/src](/home/appuser/tax/src)
+- reference sample payloads in [/home/appuser/tax/data/input/2025](/home/appuser/tax/data/input/2025)
+- blank 2025 IRS PDFs in [/home/appuser/tax/2025-empty-forms](/home/appuser/tax/2025-empty-forms)
 
-## Local Setup
+## What This Repo Does Not Contain
 
-Create a local `.env` if needed. A template is provided in `.env.example`.
-`src/tax_server_client.py` auto-loads this repo-local `.env` for tax-server settings.
+The shipped artifact intentionally excludes local-only runtime data such as:
 
-For the shared backend PDF/OCR service, this repo now uses:
+- `.env`
+- `.venv`
+- `tmp/`
+- `workspace/cases/`
+- local override files and scratch artifacts
 
-- `TAX_SERVER_BASE_URL`
-  - defaults to `http://34.10.4.155:8010`
-- `TAX_SERVER_API_KEY`
-  - required for `POST /v1/auth/inspect` and `POST /v1/pdf/process`
+Packaging is driven by [/home/appuser/tax/.gitignore](/home/appuser/tax/.gitignore) through the frontend packager in [/home/appuser/tax-frontend/scripts/package-tax-release.ts](/home/appuser/tax-frontend/scripts/package-tax-release.ts).
+The packager stages files from the current worktree and skips tracked paths that no longer exist locally.
 
-Case-specific and intermediate outputs belong under
-`workspace/cases/<case-id>/`. Raw uploaded PDFs, extracted intermediate
-artifacts, final payload JSON, review artifacts, and filled output PDFs should
-not be stored in shipped reference folders like `data/input/2025/`.
+## Runtime Expectations
 
-Use the existing workspace environment pattern from `AGENTS.md`:
+This repo currently behaves like a source workspace rather than a polished standalone Python package.
 
-```bash
-uv run --python .venv/bin/python --no-project ...
-```
+Observed realities in the inspected tree:
 
-Main prompt and sub-agent docs:
+- local development uses the existing `.venv`
+- docs and commands assume `uv run --python .venv/bin/python --no-project`
+- `uv.lock` exists locally but is not part of the shipped artifact
+- no `pyproject.toml` was present in this repo during inspection
 
-- `AGENTS.md` for intake and coordinator behavior
-- `workspace/DEDUCTIONS.md` for deduction and common tax-benefit discovery
-- `workspace/EXTRACTOR.md` and `workspace/PDF_ROUTING.md` for the extraction sub-agent
-- `workspace/REVIEW.md` and `workspace/TAX_AUDIT_METHODOLOGY.md` for the review sub-agent
-- `workspace/PDF_FILLING.md` for the PDF filling sub-agent
-- `src/tax_constants_2025.py` for structured 2025 amounts and thresholds
-- targeted 2025 supplements in `workspace/FORM_1099_DA.md`,
-  `workspace/SCHEDULE_1A_2025.md`, `workspace/CHILD_CREDITS_2025.md`,
-  `workspace/FORM_1099_K_2025.md`,
-  `workspace/SCHEDULE_C_2025_DELTAS.md`,
-  `workspace/FORM_8962_2025.md`, and
-  `workspace/FORM_1040_NR_2025_DELTAS.md`
+## Backend Dependency
 
-Default batch PDF processing now lives in:
+The local package expects a shared backend for PDF/OCR work.
+
+The API client lives in [/home/appuser/tax/src/tax_server_client.py](/home/appuser/tax/src/tax_server_client.py), and the default extraction entrypoint lives in [/home/appuser/tax/src/process_pdfs_via_api.py](/home/appuser/tax/src/process_pdfs_via_api.py).
+
+The shipped repo no longer includes a local `.env.example`.
+Operators are expected to pass the purchased API key on each extraction run.
+The tax-server base URL is fixed in code at `https://tax.heurist.xyz`.
+That purchased key is what the buyer receives after Stripe fulfillment.
+
+Example:
 
 ```bash
 uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api \
+  --api-key "$TAX_SERVER_PURCHASED_KEY" \
   --input-dir workspace/cases/case-001/sessions/session-001/source-pdfs \
   --output-dir workspace/cases/case-001/source-sets/source-set-001/extraction
 ```
+
+## Main Instruction Surface
+
+Start with:
+
+- [/home/appuser/tax/AGENTS.md](/home/appuser/tax/AGENTS.md)
+
+Supporting instruction files:
+
+- [/home/appuser/tax/workspace/DEDUCTIONS.md](/home/appuser/tax/workspace/DEDUCTIONS.md)
+- [/home/appuser/tax/workspace/EXTRACTOR.md](/home/appuser/tax/workspace/EXTRACTOR.md)
+- [/home/appuser/tax/workspace/REVIEW.md](/home/appuser/tax/workspace/REVIEW.md)
+- [/home/appuser/tax/workspace/PDF_FILLING.md](/home/appuser/tax/workspace/PDF_FILLING.md)
+
+## Core Code Paths
+
+The deterministic engine is centered on:
+
+- [/home/appuser/tax/src/models.py](/home/appuser/tax/src/models.py)
+- [/home/appuser/tax/src/registry.py](/home/appuser/tax/src/registry.py)
+- [/home/appuser/tax/src/processors.py](/home/appuser/tax/src/processors.py)
+- [/home/appuser/tax/src/pdf_fillers.py](/home/appuser/tax/src/pdf_fillers.py)
+- [/home/appuser/tax/src/field_metadata.py](/home/appuser/tax/src/field_metadata.py)
+- [/home/appuser/tax/src/live_case_builder.py](/home/appuser/tax/src/live_case_builder.py)
+
+## Case Artifact Contract
+
+Case-specific work belongs under:
+
+```text
+workspace/cases/<case-id>/
+  sessions/<session-id>/source-pdfs/
+  source-sets/<source-set-id>/extraction/
+  data/input/<tax-year>/
+  filled-forms/<tax-year>/<run-id>/
+```
+
+Raw PDFs are treated as ephemeral session storage. Durable extraction artifacts, payload JSON, audit sidecars, and filled PDFs are the retained outputs.
+
+## Testing And Demos
+
+Synthetic scenarios and integration tooling live in:
+
+- [/home/appuser/tax-test/tooling](/home/appuser/tax-test/tooling)
+
+That tooling imports the real modules from this repo and validates the same artifact contract you plan to ship.

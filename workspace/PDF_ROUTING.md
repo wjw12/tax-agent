@@ -132,15 +132,21 @@ Use the shared tax-server API for extraction runs that write into
 
 ```bash
 uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api \
+  --api-key "<issued-tax-server-key>" \
   --input-dir ./workspace/cases/case-001/sessions/session-001/source-pdfs \
   --output-dir ./workspace/cases/case-001/source-sets/source-set-001/extraction
 ```
+
+The `--api-key` value is the paid tax-server key issued after checkout. The
+repo does not bundle that secret or a local `.env` template for it. The target
+backend is fixed in code at `https://tax.heurist.xyz`.
 
 Disable the server-managed Mistral fallback only when you need a stricter
 baseline comparison:
 
 ```bash
 uv run --python .venv/bin/python --no-project -m src.process_pdfs_via_api \
+  --api-key "<issued-tax-server-key>" \
   --input-dir ./workspace/cases/case-001/sessions/session-001/source-pdfs \
   --output-dir ./workspace/cases/case-001/source-sets/source-set-001/extraction \
   --disable-mistral-fallback

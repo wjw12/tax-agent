@@ -11,7 +11,7 @@ from typing import Any
 import httpx
 
 from .case_artifacts import write_json_artifact
-from .tax_server_client import DEFAULT_TAX_SERVER_BASE_URL, TaxServerClient
+from .tax_server_client import TAX_SERVER_BASE_URL, TaxServerClient
 
 
 def list_pdf_files(input_dir: Path) -> list[Path]:
@@ -61,14 +61,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory to write per-file routing JSON plus a run manifest.",
     )
     parser.add_argument(
-        "--base-url",
-        default=None,
-        help=f"Override tax-server base URL (default env or {DEFAULT_TAX_SERVER_BASE_URL}).",
-    )
-    parser.add_argument(
         "--api-key",
-        default=None,
-        help="Override TAX_SERVER_API_KEY for this run.",
+        required=True,
+        help="Purchased tax-server API key for this run.",
     )
     parser.add_argument(
         "--case-id-prefix",
@@ -102,7 +97,9 @@ def main() -> int:
         "files": [],
     }
 
-    with TaxServerClient(base_url=args.base_url, api_key=args.api_key, timeout_seconds=300) as client:
+    manifest["base_url"] = TAX_SERVER_BASE_URL
+
+    with TaxServerClient(api_key=args.api_key, timeout_seconds=300) as client:
         manifest["base_url"] = client.base_url
         try:
             manifest["health"] = client.health()

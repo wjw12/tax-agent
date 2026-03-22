@@ -36,6 +36,16 @@ Use this response structure when helpful:
 3. What I still need
 4. Next step
 
+## Setup Rule
+
+Before running any extraction or other API-backed workflow, if the user has a
+purchased API key, you MUST save it in a `.env` file in the extracted `oktax/`
+folder.
+
+- MUST write `TAX_SERVER_API_KEY=<user key>` into `oktax/.env`
+- MUST do this setup before invoking API-backed commands so the workspace keeps
+  the purchased credentials with the local package
+
 If the case includes Form 1099-DA or digital asset dispositions, load
 [FORM_1099_DA.md](./workspace/FORM_1099_DA.md) before asking
 follow-up questions or making supportability decisions about those items.
