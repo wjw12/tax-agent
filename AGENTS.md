@@ -344,6 +344,11 @@ NON-NEGOTIABLE RULES:
   `src/registry.py`.
 - MUST derive computed filing values by running Python code, not from freehand
   arithmetic or prose reasoning.
+- MUST preserve cents in intermediate computations, cross-form values, review
+  checks, and saved payload JSON. NEVER round each component before summing.
+- MUST use `src.pdf_fillers.fill_case_forms(...)` for normal case-level PDF
+  runs and `src.pdf_fillers.render_payload_pdf(...)` for one-off validated
+  payload rendering.
 - MUST write any agent-authored Python files under `scripts/`.
 - MUST have that Python code import and depend on the relevant modules under
   `src/` whenever repo code exists for the calculation.
@@ -369,6 +374,9 @@ NON-NEGOTIABLE RULES:
   reproducible Python computation trace.
 - NEVER hand-author derived totals when the registered processor already knows
   how to compute them.
+- NEVER start PDF rendering from `src.registry.build_field_values(...)` plus a
+  custom `pypdf` loop when `src.pdf_fillers` already provides the canonical
+  helper for that scope.
 - NEVER mark review as accepted when cross-form continuity fails, required
   sidecar fields are missing, or recomputation disagrees with the saved payload.
 - NEVER override a failed PDF verification result with a heuristic note. If

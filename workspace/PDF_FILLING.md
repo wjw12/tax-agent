@@ -77,6 +77,29 @@ Code paths to use:
 Treat those modules as the executable contract for how form values are built and
 written.
 
+Canonical execution path for a validated payload:
+
+For one saved payload file:
+
+1. call `src.pdf_fillers.load_payload_for_pdf_fill(payload_path)`
+2. call `src.pdf_fillers.render_payload_pdf(payload, output_pdf_path)`
+
+For a normal case run under `workspace/cases/<case-id>/`:
+
+1. call `src.pdf_fillers.fill_case_forms(case_root, tax_year=2025, output_mode=...)`
+2. let that helper load payloads, enforce audit gating, render PDFs into a new
+   run directory, verify each written PDF, and write `fill-manifest.json` plus
+   `verification-report.json`
+
+Use `src.pdf_fillers.build_pdf_fill_plan(payload)` only for inspection or
+mapping/debug work. It is not the normal entry point for rendering.
+
+Do not invent a custom fill script when the existing helpers already cover the
+workflow.
+Do not start a PDF fill flow from `src.registry.build_field_values(...)`,
+manual `pypdf` calls, or ad hoc field-name inspection when the canonical
+helpers above already apply.
+
 Before filling, verify that `computed_input` and `cross_form` fields in the
 payload are populated correctly by consulting `src/field_metadata.py`. If a
 `computed_input` field (e.g., `tax_before_credits`) is `0` when the upstream
@@ -188,8 +211,19 @@ fields are a contract failure.
 
 ### 2. Use deterministic filler logic
 
-Build logical field values using the registered filler function for the form.
-Use the existing mapping logic to translate logical keys to PDF field names.
+Use `src.pdf_fillers.render_payload_pdf(...)` or
+`src.pdf_fillers.fill_case_forms(...)` as the default rendering path. Those
+helpers already perform the registered filler step, the mapping step, the PDF
+write, and the read-back verification step in the correct order.
+
+Logical filler keys are NOT the same thing as PDF field names. Keys such as
+`taxpayer_first_name` or `line_11` must not be written directly into the PDF
+unless they have first been resolved through `src.pdf_mapping.py`.
+
+If you are debugging a mapping issue, inspect `plan.logical_field_values` and
+`plan.mapping` from `src.pdf_fillers.build_pdf_fill_plan(payload)`, then return
+to the canonical render helpers above. Do not replace them with custom PDF
+writer code.
 
 ### 3. Respect manual mappings
 

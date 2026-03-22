@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+from dataclasses import dataclass
+import json
 from pathlib import Path
+from typing import Literal
 
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import BooleanObject, NameObject, TextStringObject
 
+from .audit_models import AuditStatus, FormAuditSidecar
 from .core import FormComputation, digits_only, format_irs_dollar
 from .models import (
+    BaseFormInput,
     Form1040Input,
     Form1040NRScheduleAInput,
     Form1040NRScheduleNECInput,
@@ -38,6 +44,7 @@ from .models import (
     ScheduleEInput,
     ScheduleSEInput,
 )
+from .pdf_mapping import PdfFieldMapping
 from .processors import (
     process_1040,
     process_1040_nr_schedule_a,
@@ -68,6 +75,57 @@ from .processors import (
     process_schedule_eic,
     process_schedule_se,
 )
+
+FORMS_DIR = Path(__file__).resolve().parent.parent / "2025-empty-forms"
+
+
+@dataclass(frozen=True)
+class PdfFillPlan:
+    blank_pdf_path: Path
+    pdf_filename: str
+    logical_field_values: dict[str, str]
+    mapping: PdfFieldMapping
+
+
+@dataclass(frozen=True)
+class PdfVerificationResult:
+    status: Literal["verified", "failed"]
+    mapped_text_count: int
+    mapped_checkbox_count: int
+    verified_count: int
+    unmapped_keys: list[str]
+    mismatches: list[str]
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "status": self.status,
+            "mapped_text_count": self.mapped_text_count,
+            "mapped_checkbox_count": self.mapped_checkbox_count,
+            "verified_count": self.verified_count,
+            "unmapped_keys": self.unmapped_keys,
+            "mismatches": self.mismatches,
+        }
+
+
+@dataclass(frozen=True)
+class RenderedPdfResult:
+    form_code: str
+    pdf_filename: str
+    output_pdf_path: Path
+    verification: PdfVerificationResult
+    payload_path: Path | None = None
+    audit_path: Path | None = None
+    audit_status: AuditStatus | None = None
+
+
+@dataclass(frozen=True)
+class PdfFillRunResult:
+    run_id: str
+    run_dir: Path
+    manifest_path: Path
+    verification_report_path: Path
+    status: Literal["verified", "draft"]
+    forms: list[RenderedPdfResult]
 
 
 def _line_fields(form: FormComputation) -> dict[str, str]:
@@ -570,18 +628,37 @@ def list_pdf_fields(pdf_path: str | Path) -> dict[str, object]:
     return reader.get_fields() or {}
 
 
-def write_filled_pdf(
+def build_pdf_fill_plan(payload) -> PdfFillPlan:
+    """Build the canonical logical-field and PDF-field mapping plan for a payload."""
+
+    from .pdf_mapping import build_pdf_field_mapping
+    from .registry import build_field_values, get_form_definition
+
+    definition = get_form_definition(payload.form_code)
+    logical_field_values = build_field_values(payload)
+    mapping = build_pdf_field_mapping(
+        payload.form_code,
+        definition.pdf_filename,
+        logical_field_values,
+    )
+    return PdfFillPlan(
+        blank_pdf_path=FORMS_DIR / definition.pdf_filename,
+        pdf_filename=definition.pdf_filename,
+        logical_field_values=logical_field_values,
+        mapping=mapping,
+    )
+
+
+def write_mapped_pdf(
     blank_pdf_path: str | Path,
     output_pdf_path: str | Path,
-    field_values: dict[str, str],
-    field_map: dict[str, str] | None = None,
+    mapping: PdfFieldMapping,
 ) -> Path:
+    """Write a PDF using an already-built PdfFieldMapping."""
+
     reader = PdfReader(str(blank_pdf_path))
     writer = PdfWriter()
     writer.clone_document_from_reader(reader)
-    mapped_values = {
-        (field_map.get(key, key) if field_map else key): value for key, value in field_values.items()
-    }
     acroform = writer._root_object.get("/AcroForm")
     if acroform and hasattr(acroform, "get_object"):
         acroform = acroform.get_object()
@@ -593,13 +670,392 @@ def write_filled_pdf(
         for annot_ref in annots:
             annot = annot_ref.get_object()
             field_name = annot.get("/T")
-            if field_name not in mapped_values:
+            if field_name in mapping.mapped_text_fields:
+                value = TextStringObject(mapping.mapped_text_fields[field_name])
+                annot[NameObject("/V")] = value
+                annot[NameObject("/DV")] = value
                 continue
-            value = TextStringObject(mapped_values[field_name])
-            annot[NameObject("/V")] = value
-            annot[NameObject("/DV")] = value
+            if field_name in mapping.mapped_checkbox_fields:
+                _, on_value = mapping.mapped_checkbox_fields[field_name]
+                value = NameObject(on_value)
+                annot[NameObject("/V")] = value
+                annot[NameObject("/AS")] = value
+                annot[NameObject("/DV")] = value
     output_path = Path(output_pdf_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("wb") as handle:
         writer.write(handle)
     return output_path
+
+
+def load_payload_for_pdf_fill(
+    payload_path: str | Path,
+    *,
+    validation_mode: Literal["reference", "live"] = "live",
+) -> BaseFormInput:
+    """Load and validate one saved payload JSON file through the registry model path."""
+
+    from .registry import parse_form_input
+
+    resolved = Path(payload_path)
+    payload = json.loads(resolved.read_text(encoding="utf-8"))
+    form_code = payload.get("form_code")
+    if not form_code:
+        raise ValueError(f"Payload at {resolved} is missing form_code")
+    return parse_form_input(form_code, payload, validation_mode=validation_mode)
+
+
+def verify_mapped_pdf(
+    output_pdf_path: str | Path,
+    mapping: PdfFieldMapping,
+) -> PdfVerificationResult:
+    """Reopen a rendered PDF and verify every mapped text and checkbox field."""
+
+    text_values, checkbox_values = _read_written_pdf_values(output_pdf_path)
+    mismatches: list[str] = []
+    verified_count = 0
+
+    for field_name, expected in mapping.mapped_text_fields.items():
+        actual = text_values.get(field_name, "")
+        if actual != expected:
+            mismatches.append(
+                f"{field_name}: expected {expected!r}, got {actual!r}"
+            )
+            continue
+        verified_count += 1
+
+    for field_name, (_, on_value) in mapping.mapped_checkbox_fields.items():
+        actual = checkbox_values.get(field_name, "")
+        if actual != on_value:
+            mismatches.append(
+                f"{field_name}: expected {on_value!r}, got {actual!r}"
+            )
+            continue
+        verified_count += 1
+
+    status: Literal["verified", "failed"] = (
+        "verified" if not mapping.unmapped_keys and not mismatches else "failed"
+    )
+    return PdfVerificationResult(
+        status=status,
+        mapped_text_count=len(mapping.mapped_text_fields),
+        mapped_checkbox_count=len(mapping.mapped_checkbox_fields),
+        verified_count=verified_count,
+        unmapped_keys=mapping.unmapped_keys,
+        mismatches=mismatches,
+    )
+
+
+def render_payload_pdf(
+    payload: BaseFormInput,
+    output_pdf_path: str | Path,
+    *,
+    allow_unmapped_keys: bool = False,
+    payload_path: str | Path | None = None,
+    audit_path: str | Path | None = None,
+    audit_status: AuditStatus | None = None,
+) -> RenderedPdfResult:
+    """
+    Canonical one-form PDF render path.
+
+    This function owns the deterministic fill flow for a validated payload:
+    registered model -> logical filler -> PDF mapping -> PDF write -> read-back verification.
+    """
+
+    plan = build_pdf_fill_plan(payload)
+    if plan.mapping.unmapped_keys and not allow_unmapped_keys:
+        raise ValueError(
+            f"PDF mapping incomplete for {payload.form_code}: "
+            + ", ".join(plan.mapping.unmapped_keys)
+        )
+    write_mapped_pdf(plan.blank_pdf_path, output_pdf_path, plan.mapping)
+    verification = verify_mapped_pdf(output_pdf_path, plan.mapping)
+    if verification.status != "verified":
+        raise ValueError(
+            f"PDF verification failed for {payload.form_code}: "
+            + "; ".join(verification.mismatches)
+        )
+    return RenderedPdfResult(
+        form_code=payload.form_code,
+        pdf_filename=plan.pdf_filename,
+        output_pdf_path=Path(output_pdf_path),
+        verification=verification,
+        payload_path=Path(payload_path) if payload_path else None,
+        audit_path=Path(audit_path) if audit_path else None,
+        audit_status=audit_status,
+    )
+
+
+def discover_case_form_codes(
+    case_root: str | Path,
+    *,
+    tax_year: int = 2025,
+) -> list[str]:
+    """Discover supported saved payloads under one case input directory."""
+
+    from .registry import FORM_DEFINITIONS
+
+    input_dir = Path(case_root) / "data" / "input" / str(tax_year)
+    sample_to_code = {
+        definition.sample_json: definition.form_code
+        for definition in FORM_DEFINITIONS.values()
+    }
+    discovered: list[str] = []
+    for payload_path in sorted(input_dir.glob("*.json")):
+        if payload_path.name.endswith(".audit.json"):
+            continue
+        form_code = sample_to_code.get(payload_path.name)
+        if form_code:
+            discovered.append(form_code)
+    return discovered
+
+
+def fill_case_forms(
+    case_root: str | Path,
+    *,
+    tax_year: int = 2025,
+    form_codes: list[str] | None = None,
+    output_mode: Literal["verified", "draft"] = "verified",
+    run_id: str | None = None,
+) -> PdfFillRunResult:
+    """
+    Canonical case-level PDF fill path.
+
+    This helper loads saved payloads and sidecars from the case artifact layout,
+    renders each form into a new run directory, verifies each written PDF, and
+    writes the run manifest plus verification report.
+    """
+
+    from .registry import get_form_definition
+
+    case_root_path = Path(case_root)
+    resolved_form_codes = form_codes or discover_case_form_codes(
+        case_root_path,
+        tax_year=tax_year,
+    )
+    if not resolved_form_codes:
+        raise FileNotFoundError(
+            f"No supported form payloads found under {case_root_path / 'data' / 'input' / str(tax_year)}"
+        )
+
+    resolved_run_id = run_id or _build_run_id()
+    run_dir = case_root_path / "filled-forms" / str(tax_year) / resolved_run_id
+    if run_dir.exists():
+        raise FileExistsError(f"Fill run directory already exists: {run_dir}")
+    run_dir.mkdir(parents=True, exist_ok=False)
+
+    created_at = datetime.now(timezone.utc).isoformat()
+    results: list[RenderedPdfResult] = []
+    input_paths: dict[str, str] = {}
+    output_paths: dict[str, str] = {}
+    audit_paths: dict[str, str | None] = {}
+    audit_status_by_form: dict[str, AuditStatus | None] = {}
+    verification_forms: dict[str, dict[str, object]] = {}
+
+    for form_code in resolved_form_codes:
+        definition = get_form_definition(form_code)
+        payload_path = case_root_path / "data" / "input" / str(tax_year) / definition.sample_json
+        audit_path = payload_path.with_name(f"{payload_path.stem}.audit.json")
+        sidecar = _load_audit_sidecar(audit_path)
+        input_paths[form_code] = str(payload_path.resolve())
+        audit_paths[form_code] = str(audit_path.resolve()) if sidecar else None
+        audit_status_by_form[form_code] = sidecar.status if sidecar else None
+
+        try:
+            _ensure_fill_mode_allowed(
+                form_code,
+                sidecar,
+                output_mode=output_mode,
+            )
+            payload = load_payload_for_pdf_fill(payload_path, validation_mode="live")
+            output_pdf_path = run_dir / f"{payload_path.stem}.filled.pdf"
+            result = render_payload_pdf(
+                payload,
+                output_pdf_path,
+                payload_path=payload_path,
+                audit_path=audit_path if sidecar else None,
+                audit_status=sidecar.status if sidecar else None,
+            )
+        except Exception as exc:
+            verification_forms[form_code] = {
+                "status": "failed",
+                "mapped_text_count": 0,
+                "mapped_checkbox_count": 0,
+                "verified_count": 0,
+                "unmapped_keys": [],
+                "mismatches": [],
+                "error": str(exc),
+            }
+            manifest_path = _write_fill_manifest(
+                run_dir,
+                run_id=resolved_run_id,
+                tax_year=tax_year,
+                requested_forms=resolved_form_codes,
+                input_paths=input_paths,
+                audit_paths=audit_paths,
+                output_paths=output_paths,
+                audit_status_by_form=audit_status_by_form,
+                created_at=created_at,
+                status="failed",
+                output_mode=output_mode,
+                failure_reason=str(exc),
+            )
+            verification_report_path = _write_verification_report(
+                run_dir,
+                run_id=resolved_run_id,
+                status="failed",
+                forms=verification_forms,
+            )
+            raise ValueError(
+                f"PDF fill run failed for {form_code}: {exc}. "
+                f"See {manifest_path} and {verification_report_path}"
+            ) from exc
+
+        results.append(result)
+        output_paths[form_code] = str(result.output_pdf_path.resolve())
+        verification_forms[form_code] = result.verification.to_dict()
+
+    manifest_path = _write_fill_manifest(
+        run_dir,
+        run_id=resolved_run_id,
+        tax_year=tax_year,
+        requested_forms=resolved_form_codes,
+        input_paths=input_paths,
+        audit_paths=audit_paths,
+        output_paths=output_paths,
+        audit_status_by_form=audit_status_by_form,
+        created_at=created_at,
+        status=output_mode,
+        output_mode=output_mode,
+        failure_reason=None,
+    )
+    verification_report_path = _write_verification_report(
+        run_dir,
+        run_id=resolved_run_id,
+        status=output_mode,
+        forms=verification_forms,
+    )
+    return PdfFillRunResult(
+        run_id=resolved_run_id,
+        run_dir=run_dir,
+        manifest_path=manifest_path,
+        verification_report_path=verification_report_path,
+        status=output_mode,
+        forms=results,
+    )
+
+
+def _read_written_pdf_values(
+    pdf_path: str | Path,
+) -> tuple[dict[str, str], dict[str, str]]:
+    reader = PdfReader(str(pdf_path))
+    text_values: dict[str, str] = {}
+    checkbox_values: dict[str, str] = {}
+    for page in reader.pages:
+        annots = page.get("/Annots", [])
+        if hasattr(annots, "get_object"):
+            annots = annots.get_object()
+        for annot_ref in annots:
+            annot = annot_ref.get_object()
+            field_name = annot.get("/T")
+            if not field_name:
+                continue
+            text_values[field_name] = _pdf_value_to_string(annot.get("/V"))
+            checkbox_values[field_name] = _pdf_value_to_string(
+                annot.get("/AS") or annot.get("/V")
+            )
+    return text_values, checkbox_values
+
+
+def _pdf_value_to_string(value: object | None) -> str:
+    if value is None:
+        return ""
+    return str(value)
+
+
+def _load_audit_sidecar(audit_path: Path) -> FormAuditSidecar | None:
+    if not audit_path.exists():
+        return None
+    payload = json.loads(audit_path.read_text(encoding="utf-8"))
+    return FormAuditSidecar.model_validate(payload)
+
+
+def _ensure_fill_mode_allowed(
+    form_code: str,
+    sidecar: FormAuditSidecar | None,
+    *,
+    output_mode: Literal["verified", "draft"],
+) -> None:
+    if sidecar is None:
+        if output_mode == "verified":
+            raise ValueError(
+                f"Verified PDF fill for {form_code} requires a matching audit sidecar"
+            )
+        return
+    if sidecar.status == "blocked":
+        raise ValueError(f"Audit status is blocked for {form_code}")
+    if output_mode == "verified" and sidecar.status != "accepted":
+        raise ValueError(
+            f"Verified PDF fill for {form_code} requires accepted audit status, got {sidecar.status}"
+        )
+
+
+def _build_run_id() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
+
+
+def _write_fill_manifest(
+    run_dir: Path,
+    *,
+    run_id: str,
+    tax_year: int,
+    requested_forms: list[str],
+    input_paths: dict[str, str],
+    audit_paths: dict[str, str | None],
+    output_paths: dict[str, str],
+    audit_status_by_form: dict[str, AuditStatus | None],
+    created_at: str,
+    status: Literal["verified", "draft", "failed"],
+    output_mode: Literal["verified", "draft"],
+    failure_reason: str | None,
+) -> Path:
+    manifest_path = run_dir / "fill-manifest.json"
+    payload: dict[str, object] = {
+        "run_id": run_id,
+        "tax_year": tax_year,
+        "status": status,
+        "output_mode": output_mode,
+        "forms": requested_forms,
+        "input_paths": input_paths,
+        "audit_paths": audit_paths,
+        "output_paths": output_paths,
+        "audit_status_by_form": audit_status_by_form,
+        "created_at": created_at,
+    }
+    if failure_reason:
+        payload["failure_reason"] = failure_reason
+    _write_json_payload(manifest_path, payload)
+    return manifest_path
+
+
+def _write_verification_report(
+    run_dir: Path,
+    *,
+    run_id: str,
+    status: Literal["verified", "draft", "failed"],
+    forms: dict[str, dict[str, object]],
+) -> Path:
+    report_path = run_dir / "verification-report.json"
+    _write_json_payload(
+        report_path,
+        {
+            "run_id": run_id,
+            "status": status,
+            "forms": forms,
+        },
+    )
+    return report_path
+
+
+def _write_json_payload(path: Path, payload: dict[str, object]) -> None:
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

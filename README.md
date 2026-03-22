@@ -82,6 +82,18 @@ The deterministic engine is centered on:
 - [/home/appuser/tax/src/field_metadata.py](/home/appuser/tax/src/field_metadata.py)
 - [/home/appuser/tax/src/live_case_builder.py](/home/appuser/tax/src/live_case_builder.py)
 
+Canonical PDF fill entrypoints live in
+[/home/appuser/tax/src/pdf_fillers.py](/home/appuser/tax/src/pdf_fillers.py):
+
+- `load_payload_for_pdf_fill(payload_path)` for one saved payload file
+- `render_payload_pdf(payload, output_pdf_path)` for one validated payload
+- `fill_case_forms(case_root, tax_year=2025, output_mode="verified" | "draft")`
+  for the normal case-level run that writes PDFs, `fill-manifest.json`, and
+  `verification-report.json`
+
+`build_pdf_fill_plan(...)` is the inspection/debug helper. It is not the normal
+render entrypoint.
+
 ## Case Artifact Contract
 
 Case-specific work belongs under:

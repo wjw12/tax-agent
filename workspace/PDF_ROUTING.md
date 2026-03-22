@@ -106,30 +106,6 @@ extract text layer (pdfplumber)
 
 ---
 
-## Recommended Stack
-
-| Layer | Tool | Why |
-|---|---|---|
-| Page parsing baseline | `pdfplumber` | Fast, no dependencies, exact text layer |
-| Garble detection | Heuristics on pdfplumber output | Zero overhead, no extra library |
-| Raster OCR | `tesseract` via `pytesseract` + `pdf2image` | Reliable, outperformed PaddleOCR on these docs |
-| AI OCR fallback | tax-server managed Mistral fallback | Better fallback than PaddleOCR for complex layouts and image-like tax pages |
-| Financial table extraction | `gmft` (AutoTableDetector + AutoTableFormatter) | Best structured output for broker statements |
-| Image presence check | `pdfplumber` `.images` attribute | Already loaded, no extra cost |
-
-**PaddleOCR is not recommended.** If a second OCR engine is needed after
-tesseract, prefer **Mistral OCR** over PaddleOCR. On this document set,
-PaddleOCR was the least reliable on garbled-font pages and adds heavy
-dependency constraints (PaddlePaddle, numpy<2, oneDNN CPU compatibility
-issues).
-
-**Mistral OCR is not the default extractor.** Use the tax-server API as the
-default extraction path and let it decide when to apply OCR, table extraction,
-and any server-managed fallback. Native text extraction is still more exact on
-Fidelity, Moomoo, and Morgan Stanley statements.
-
----
-
 ## API Processing
 
 Use the shared tax-server API for extraction runs that write into
@@ -384,7 +360,7 @@ that executable path rather than from hand-written arithmetic.
 
 - Must validate against the corresponding model in `src/models.py`
 - Must preserve the existing field names and nesting used by `data/input/2025/*.json`
-- JSON numbers are accepted here for backward compatibility with the current sample files and model parsing
+- JSON values must follow the corresponding field types accepted by `src/models.py`
 
 #### Audit sidecar
 
@@ -511,7 +487,7 @@ Write the evidence sidecar next to it:
 `workspace/cases/<case-id>/data/input/2025/1040-schedule-1.audit.json`
 
 The sidecar should contain `status`, `sources`, optional `computations`, and
-`issues`. Keep it minimal. The form payload file should remain compatible with
+`issues`. Keep it minimal. The form payload file must validate against
 `src/models.py`.
 
 The sidecar should cite the `source_set_id` used for every retained source
