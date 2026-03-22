@@ -58,6 +58,9 @@ Do not skip phases. Do not accept a number because it looks plausible. Do not
 stop at the first mismatch; complete the pass and return the full set of
 findings.
 
+For named high-signal failure patterns to check during review, see
+[REVIEW.md](./REVIEW.md).
+
 ---
 
 ## Inputs

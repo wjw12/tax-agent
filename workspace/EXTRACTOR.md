@@ -27,6 +27,9 @@ This file adds extraction-specific behavior only.
 
 ## Required Behavior
 
+- do not begin payload construction until taxpayer facts needed for the active
+  forms have been resolved from intake artifacts and attached files; use
+  `workspace/PDF_ROUTING.md` for routed attachment handling
 - prefer deterministic extraction before OCR or model-based extraction
 - keep output minimal and model-compatible
 - MUST follow the EXECUTABLE CONTRACT in `src/models.py`, `src/registry.py`,
@@ -72,6 +75,8 @@ This file adds extraction-specific behavior only.
   them from accepted source values
 - NEVER add unofficial payload keys that are not declared by the registered
   Pydantic model
+- NEVER treat example payloads under `data/input/2025/` as live-case defaults;
+  they are schema references only
 - On the `1040-NR` path, never net treaty-exempt income out of `wages`. Keep
   gross wages in the wage field, persist treaty-exempt income separately, and
   route treaty disclosure detail to `Schedule OI`
@@ -116,6 +121,8 @@ another QBI issue:
    [AGENTS.md](../AGENTS.md) and `src/qbi.py`.
 3. Do not hand-author `businesses` or `taxable_income_before_qbi` without the
    executable QBI helper path.
+4. Do not hand-author the final QBI deduction from prose arithmetic. Follow the
+   executable TY2025 workflow end to end.
 
 ## Case Artifact Rules
 

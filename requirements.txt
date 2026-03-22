@@ -1,0 +1,4 @@
+# Runtime dependencies for the Python code in /home/appuser/tax
+httpx==0.28.1
+pydantic==2.12.5
+pypdf==6.8.0

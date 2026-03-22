@@ -6,6 +6,11 @@ Not all PDF pages are the same. Running every page through the same extraction
 method wastes compute, misses data, or produces garbage. A routing phase
 classifies each page before handing it to the right extractor.
 
+For the main agent and extraction sub-agent, this also means attached files are
+not treated as resolved facts until the relevant file has actually been routed
+and its usable contents have been read. A mere file reference, unread upload,
+or placeholder blob does not satisfy intake.
+
 ---
 
 ## Four Page Classes

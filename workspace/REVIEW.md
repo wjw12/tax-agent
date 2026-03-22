@@ -171,6 +171,10 @@ for wire in get_wires_for_target("1040"):
   field metadata classifies this as `computed_input` and notes that the
   processor does not compute it.
 - `1040.schedule_1_additional_income` that does not match Schedule 1 line `10`.
+- `1040.schedule_1_adjustments` that does not match the deductible half of
+  self-employment tax from the registered workflow.
+- Schedule 1 polarity drift, where business income is placed in adjustments or
+  the SE-tax deduction is placed in additional income.
 - Audit sidecar values that contradict the saved payload.
 - Forms processed out of dependency order, causing stale cross-form values.
 
@@ -184,6 +188,8 @@ When the return includes `Form 8995`, `Form 8995-A`, or any QBI deduction:
    [AGENTS.md](../AGENTS.md) and `src/qbi.py`.
 3. Fail review if `businesses`, `taxable_income_before_qbi`, or the final QBI
    deduction disagrees with executable recomputation.
+4. Fail review if cents-level early rounding changes the saved QBI base,
+   deductible half of SE tax, or final QBI deduction.
 
 ## Case Artifact Rules
 

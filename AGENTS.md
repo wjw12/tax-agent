@@ -45,6 +45,9 @@ folder.
 - MUST write `TAX_SERVER_API_KEY=<user key>` into `oktax/.env`
 - MUST do this setup before invoking API-backed commands so the workspace keeps
   the purchased credentials with the local package
+- If Python packages required by this repo, such as `pydantic`, `pypdf`, or
+  `httpx`, are missing on the machine, MUST install them from
+  `requirements.txt` before running the Python scripts
 
 If the case includes Form 1099-DA or digital asset dispositions, load
 [FORM_1099_DA.md](./workspace/FORM_1099_DA.md) before asking
@@ -139,6 +142,12 @@ When speaking to taxpayers:
 
 Do not start with document extraction. First determine the filing path.
 
+If the taxpayer says the needed facts are "attached" or "in the files", do not
+treat those facts as resolved until you have actually routed and read the
+relevant attachment(s). Use [PDF_ROUTING.md](./workspace/PDF_ROUTING.md)
+to handle attached PDFs and related file artifacts. A file reference, unread
+blob, or upload placeholder is not the same as a resolved intake fact.
+
 For every new 2025 case, collect these facts before moving deeper:
 
 1. 2025 U.S. tax residency status:
@@ -175,6 +184,17 @@ When the taxpayer may need state filing, establish before extraction:
 Only after the filing path is clear should you gather more detailed line-item
 facts and route source PDFs for extraction.
 
+Before any payload construction, restate the resolved intake facts that will be
+used downstream:
+
+- filing path
+- residency status
+- filing status
+- TIN status
+- state footprint
+- core document set
+- whether sensitive identity fields were provided or intentionally deferred
+
 Before extraction, run a deduction-discovery pass:
 
 - infer likely deduction and credit leads from the taxpayer profile and stated
@@ -207,6 +227,21 @@ Sub-agent registry:
   [TAX_AUDIT_METHODOLOGY.md](./workspace/TAX_AUDIT_METHODOLOGY.md)
 - PDF filling sub-agent:
   [PDF_FILLING.md](./workspace/PDF_FILLING.md)
+
+When to use each sub-agent:
+
+- deduction discovery:
+  use only after the filing path is clear and the case is still supported, but
+  before extraction
+- extraction:
+  use after intake facts are resolved and the active source set is ready to be
+  routed into payloads and sidecars
+- review:
+  use after extraction whenever payloads, cross-form flows, or substantiation
+  need verification before output
+- PDF filling:
+  use only after the case is accepted for output, or when the user explicitly
+  asked for draft PDFs despite open review items
 
 Use sub-agents only for their narrow responsibilities.
 Keep the main thread focused on taxpayer facts, supportability decisions, and
@@ -328,6 +363,8 @@ NON-NEGOTIABLE RULES:
 - MUST use `src/qbi.py` when the case includes `Form 8995`, `Form 8995-A`, or
   any QBI analysis. See the **QBI Workflow (Form 8995 / 8995-A)** section
   below.
+- MUST treat files under `data/input/2025/` as schema and reference examples
+  only, never as factual defaults for a live case.
 - NEVER invent numeric tax values that cannot be traced to source evidence or a
   reproducible Python computation trace.
 - NEVER hand-author derived totals when the registered processor already knows
@@ -414,6 +451,9 @@ Required workflow:
 5. Exclude any amount deducted under IRC `224` for qualified tips from QBI.
 6. During review, validate saved QBI payloads with
    `src.qbi.validate_qbi_form_input_2025(...)`.
+7. Do not stop at validating the QBI base. The final QBI deduction must also
+   follow the executable TY2025 workflow, including any taxable-income
+   limitation and cents-level precision needed by that workflow.
 
 ### Layer 2 — Inter-Form Wiring And Build Order
 

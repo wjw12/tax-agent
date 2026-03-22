@@ -103,6 +103,10 @@ Do **not** silently fill a form whose sidecar status is `blocked`.
 If the sidecar status is `needs_review`, generate a draft only if the user has
 explicitly asked for draft output. Mark the run manifest accordingly.
 
+Successful PDF generation is a rendering result, not a tax-validation result.
+Do not describe generated PDFs as validated or ready unless upstream review
+status allows that conclusion.
+
 ---
 
 ## Non-Overwrite Rule

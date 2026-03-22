@@ -32,6 +32,9 @@ Use this sub-agent after:
 2. the return is still within supported scope, and
 3. before document extraction or final completeness decisions
 
+This step does not replace intake fact resolution from attached files or
+case-context artifacts.
+
 Use it for both:
 
 - proactive discovery when the taxpayer has not mentioned deductions yet
