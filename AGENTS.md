@@ -551,3 +551,184 @@ Use progressive disclosure to manage context efficiently.
 - For payloads under `workspace/cases/<case-id>/data/input/<tax-year>/`,
   missing explicit top-level fields are a CONTRACT FAILURE, not a harmless
   default.
+
+## Final Package And Mailing Instructions
+
+This product currently prepares paper-filed output packages. Do not imply that
+the taxpayer can upload a completed `1040` PDF to the IRS and file it online.
+
+When the return package is ready, give the taxpayer a practical final checklist
+covering:
+
+1. what to print
+2. what to sign
+3. what still must be filled in by hand if they deferred sensitive data
+4. where to mail it
+5. how to pay if tax is due
+
+### Federal package contents
+
+For a paper-filed original federal `Form 1040` / `1040-SR`, instruct the
+taxpayer to include:
+
+- the main `1040` or `1040-SR`
+- every generated federal schedule and form required for the return
+- any required supporting statements
+- original `Form W-2` plus any `Form W-2c` if a corrected W-2 exists
+- `Form 2439` when applicable
+- `Form W-2G` and `Form 1099-R` only if federal income tax was withheld
+- `Form 1040-V` only if the taxpayer is mailing a check or money order with a
+  balance-due return
+
+Tell the taxpayer to assemble schedules and forms behind `Form 1040` /
+`1040-SR` in `Attachment Sequence No.` order and not to add random letters or
+explanations unless the form instructions require them.
+
+For supported paper-filed original `Form 1040-NR`, instruct the taxpayer to
+include the generated `1040-NR`, all required schedules/forms, and the
+withholding attachments required by the `1040-NR` instructions, including
+copies of `W-2`, `1042-S`, `SSA-1042S`, `RRB-1042S`, and `8288-A` when
+applicable, plus `1099-R` if withholding was taken, and `8805` on the back
+when applicable.
+
+For state returns:
+
+- include the generated state return and state schedules
+- include state withholding forms and any state-required copies of federal
+  forms exactly as that state's 2025 instructions require
+- do not assume the IRS attachment list is sufficient for the state package
+
+### Signature and completion checklist
+
+Before telling the taxpayer to mail a return, make sure the checklist covers:
+
+- taxpayer handwritten signature on the paper return
+- spouse handwritten signature on a joint paper return
+- date next to each required signature
+- occupation entries where the form asks for them
+- paid preparer section only if a paid preparer actually prepared the return
+- any issued `IP PIN` entered in the space provided next to the signature line
+- current mailing address completed
+- all required SSNs / ITINs completed
+- all printed pages present after assembly
+
+Remind the taxpayer that typed-font, scanned, or digital signatures are not
+valid for a paper-filed `1040` / `1040-SR`.
+
+### If the taxpayer deferred sensitive personal data
+
+If the taxpayer chose to skip sensitive personal information during intake,
+explicitly remind them that the final PDFs are not ready to sign or mail until
+they manually fill in every deferred required item.
+
+Call out the common deferred fields directly:
+
+- taxpayer and spouse full legal names
+- SSN or ITIN
+- street address, city, state, ZIP
+- date of birth where required by a state return
+- occupations where requested
+- `IP PIN`, if issued
+- dependent SSNs / ITINs and birth dates
+- direct-deposit or direct-debit banking details, if the taxpayer wants those
+
+Do not say "optional" unless the line is actually optional under the form
+instructions. If a required identity field was deferred, say clearly that the
+taxpayer must complete it by hand before signing and mailing.
+
+### Federal mailing address rules
+
+For tax year 2025 returns mailed during calendar year 2026, use the IRS
+current-address pages, not stale memory and not a printed address copied from
+an older booklet.
+
+Primary federal lookup pages:
+
+- `1040` / `1040-SR` state-by-state:
+  <https://www.irs.gov/filing/where-to-file-paper-tax-returns-with-or-without-a-payment>
+- IRS master "where to file" index for forms beginning with `1`:
+  <https://www.irs.gov/filing/where-to-file-forms-beginning-with-the-number-1>
+
+When giving a mailing address, first determine:
+
+- which return is being mailed: `1040`, `1040-SR`, `1040-NR`, `1040-X`,
+  `4868`, `1040-V`, etc.
+- whether the package includes a payment
+- the taxpayer's state of residence
+- whether the taxpayer has foreign / APO / FPO / territorial /
+  international filing characteristics
+- whether the taxpayer is using USPS or a private delivery service
+
+Never guess. Look up the exact address on the current IRS page that matches the
+return type and payment condition.
+
+Important federal routing rules to surface:
+
+- `1040` / `1040-SR` mailing addresses change by state and by whether a
+  payment is enclosed
+- `1040-V` mailing addresses also change by state group and differ from
+  no-payment filing addresses
+- `1040-NR` uses different addresses from resident `1040` returns and also
+  changes based on whether a payment is enclosed
+- if using a private delivery service instead of USPS, use the IRS-designated
+  private-delivery instructions rather than a PO Box
+
+### State mailing address rules
+
+State paper-filing addresses and payment instructions are not standardized.
+
+For every supported state return:
+
+- use the official 2025 instructions or state Department of Revenue / Taxation
+  website for that exact form
+- verify whether the address changes for refund/no-payment vs balance-due
+- verify whether the state requires a copy of the federal return, W-2s, or
+  other attachments in the same envelope
+- verify whether the state wants a separate payment voucher
+
+Do not reuse a federal address for a state return and do not assume a state's
+2024 address still applies for tax year 2025 filings.
+
+### Payment instructions
+
+If the taxpayer owes federal tax, present the cleanest options in this order:
+
+1. pay electronically at `IRS.gov/Payments`
+2. if they cannot or do not want to pay in full, review IRS payment-plan
+   options
+3. if they are mailing a check or money order, include `Form 1040-V` and use
+   the correct payment address
+
+Federal payment guidance to give:
+
+- electronic payment options: <https://www.irs.gov/payments>
+- Direct Pay:
+  <https://www.irs.gov/payments/direct-pay-with-bank-account>
+- payment plans / installment agreements:
+  <https://www.irs.gov/payments/payment-plans-installment-agreements>
+- online payment agreement:
+  <https://www.irs.gov/individuals/online-payment-agreement-application>
+- `Form 1040-V`:
+  <https://www.irs.gov/pub/irs-prior/f1040v--2025.pdf>
+
+If mailing a check or money order with `Form 1040-V`, remind the taxpayer:
+
+- make it payable to `United States Treasury`
+- do not send cash
+- put the taxpayer name, address, daytime phone number, SSN / ITIN, and
+  `2025 Form 1040`, `2025 Form 1040-SR`, or `2025 Form 1040-NR` on the payment
+- do not staple the payment or `1040-V` to the return
+- put the payment and voucher loose in the envelope with the return
+
+If paying electronically, tell the taxpayer not to include `Form 1040-V`.
+
+### Customer-facing wrap-up language
+
+When helpful, end with a short checklist like:
+
+1. Print the federal return and all listed attachments.
+2. Manually fill any deferred personal information before signing.
+3. Sign and date everywhere required.
+4. If paying by check, include `Form 1040-V` and use the balance-due address.
+5. Mail the federal and state returns to their separate official addresses.
+6. Keep a complete copy and proof of mailing for records.
