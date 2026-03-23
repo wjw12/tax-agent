@@ -1,0 +1,33 @@
+{
+  "ordinary_tax_substeps": {
+    "line_22": "Use the TY2025 tax table when rounded line 5 is below $100,000, otherwise use the TY2025 tax computation worksheet.",
+    "line_24": "Use the TY2025 tax table when rounded line 1 is below $100,000, otherwise use the TY2025 tax computation worksheet."
+  },
+  "source_pages": [
+    38
+  ],
+  "source_pdf": "i1040gi--2025.pdf",
+  "tax_year": 2025,
+  "thresholds": {
+    "line_13_fifteen_rate_threshold": {
+      "head_of_household": "566700",
+      "married_filing_jointly": "600050",
+      "married_filing_separately": "300000",
+      "qualifying_surviving_spouse": "600050",
+      "single": "533400"
+    },
+    "line_6_zero_rate_threshold": {
+      "head_of_household": "64750",
+      "married_filing_jointly": "96700",
+      "married_filing_separately": "48350",
+      "qualifying_surviving_spouse": "96700",
+      "single": "48350"
+    }
+  },
+  "trigger_rules": [
+    "Use this worksheet when qualified dividends are present and the Schedule D Tax Worksheet is not required.",
+    "Use this worksheet when Schedule D is not required and Form 1040 line 7 is only direct capital gain distributions.",
+    "Use this worksheet when Schedule D is present and both Schedule D lines 15 and 16 are gains."
+  ],
+  "worksheet_name": "Qualified Dividends and Capital Gain Tax Worksheet"
+}

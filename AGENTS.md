@@ -58,6 +58,15 @@ unclear, load [FORM_1040_NR.md](./workspace/FORM_1040_NR.md)
 before deciding supportability or asking document-specific nonresident
 questions.
 
+If the case is on the `Form 1040` or `Form 1040-SR` path and you will
+construct a 1040-family payload, load
+[FORM_1040_2025_TAX.md](./workspace/FORM_1040_2025_TAX.md)
+before setting Form 1040 line `7`, Form 1040 line `16`, or
+`tax_before_credits`. Do this early in the payload workflow, not as a late
+review note. Use [src/input_loader.py](./src/input_loader.py) as the
+executable reference for the exact line `7` assembly rule and the deterministic
+derivation of `requires_schedule_d_tax_worksheet`.
+
 If the case may involve the new 2025 `Schedule 1-A` deductions, load
 [SCHEDULE_1A_2025.md](./workspace/SCHEDULE_1A_2025.md) before
 routing tips, overtime, passenger-vehicle loan interest, or senior-deduction
@@ -195,6 +204,12 @@ used downstream:
 - core document set
 - whether sensitive identity fields were provided or intentionally deferred
 
+If the downstream payload set includes `Form 1040` or `Form 1040-SR`, load
+[FORM_1040_2025_TAX.md](./workspace/FORM_1040_2025_TAX.md)
+at this stage, before constructing the payload. Treat this as part of the
+primary 2025 Form 1040 workflow. Do not wait until review or a late
+field-by-field cleanup to discover the line `7` or line `16` rules.
+
 Before extraction, run a deduction-discovery pass:
 
 - infer likely deduction and credit leads from the taxpayer profile and stated
@@ -205,6 +220,11 @@ Before extraction, run a deduction-discovery pass:
   uploaded yet
 - if you persist the result, save it in
   `workspace/cases/<case-id>/intake/deduction-leads.json`
+
+This deduction-discovery pass is mandatory for a supported live case before
+extraction. It is acceptable for the result to be "no likely leads" or "no
+additional documents requested," but it is not acceptable to skip the sub-agent
+because the expected impact seems small.
 
 ## Coordinator Rules
 
@@ -228,6 +248,47 @@ Sub-agent registry:
 - PDF filling sub-agent:
   [PDF_FILLING.md](./workspace/PDF_FILLING.md)
 
+## Mandatory Sub-Agent Order
+
+When the task is to prepare a live return, prepare draft filing PDFs, or move a
+supported case from intake toward filing output, the coordinator MUST use the
+sub-agents in this order:
+
+1. deduction discovery sub-agent
+2. extraction sub-agent
+3. review sub-agent
+4. PDF filling sub-agent
+
+This is a required pipeline, not a suggestion.
+
+Interpretation rules:
+
+- "Prepare the tax return", "fill the forms", "generate filing PDFs", and
+  similar requests all mean the pipeline above unless the case is rejected as
+  unsupported before a downstream stage
+- a stage may conclude with a minimal result such as "no deduction leads" or
+  "no changes needed", but that stage still must be invoked and summarized
+- do not skip a stage because the agent believes the impact will be small,
+  because the PDFs look readable by eye, or because a later stage seems faster
+- do not jump directly from intake to manual PDF reading, payload authoring,
+  review conclusions, or PDF filling
+- do not treat hand-reading PDFs in the main thread as a substitute for the
+  extraction sub-agent
+- do not treat self-checking during filling as a substitute for the review
+  sub-agent
+
+The only valid reasons not to reach a later stage are:
+
+- the case was classified unsupported
+- the filing path is still unresolved
+- the user has not yet supplied the required source material
+- an upstream stage returned `blocked`
+- the user explicitly asked for a limited draft workflow that
+  [PDF_FILLING.md](./workspace/PDF_FILLING.md) allows despite open review items
+
+If one of those conditions applies, say which stage stopped the pipeline and
+why. Otherwise, continue in order.
+
 When to use each sub-agent:
 
 - deduction discovery:
@@ -235,10 +296,13 @@ When to use each sub-agent:
   before extraction
 - extraction:
   use after intake facts are resolved and the active source set is ready to be
-  routed into payloads and sidecars
+  routed into payloads and sidecars; for attached PDFs, this means routing them
+  through [PDF_ROUTING.md](./workspace/PDF_ROUTING.md) rather than reading them
+  ad hoc in the coordinator
 - review:
   use after extraction whenever payloads, cross-form flows, or substantiation
-  need verification before output
+  need verification before output; for live return preparation, this is a
+  required gate before final output
 - PDF filling:
   use only after the case is accepted for output, or when the user explicitly
   asked for draft PDFs despite open review items
@@ -272,14 +336,22 @@ The coordination loop is:
 
 1. Intake taxpayer facts and documents
 2. Decide supported vs unsupported
-3. If supported and the filing path is clear, run the deduction discovery sub-agent
-4. Ask the taxpayer only the highest-yield deduction follow-up questions and request supporting records
-5. Run extraction on the active source set
-6. Run review on extracted payloads
-7. If expense substantiation is material, include it in the review pass
-8. If multiple forms or source sets interact materially, include return-level reconciliation in the review pass
-9. If the case is accepted for output, run PDF filling
-10. If review fails or the user changes source PDFs, return upstream and re-run the necessary sub-agent
+3. If unsupported, stop the pipeline and explain the blocker; do not extract,
+   review, or fill around it
+4. If supported and the filing path is clear, run the deduction discovery
+   sub-agent and capture its result even when it finds no meaningful leads
+5. Ask the taxpayer only the highest-yield deduction follow-up questions and
+   request supporting records
+6. Run the extraction sub-agent on the active source set
+7. Run the review sub-agent on the extracted payloads before any final output
+8. If expense substantiation is material, include it in the review pass
+9. If multiple forms or source sets interact materially, include return-level
+   reconciliation in the review pass
+10. Only if review accepts the case for output, run the PDF filling sub-agent,
+    unless the user explicitly requested a draft workflow allowed by
+    [PDF_FILLING.md](./workspace/PDF_FILLING.md)
+11. If review fails, if extraction inputs change, or if new source PDFs appear,
+    return upstream and re-run the necessary sub-agent before any final PDF fill
 
 If source PDFs are added, removed, replaced, or corrected:
 
@@ -289,6 +361,10 @@ If source PDFs are added, removed, replaced, or corrected:
 
 If review status is `needs_review` or `blocked`, do not treat the return as
 ready for filing.
+
+For avoidance of doubt: a coordinator that skips deduction discovery,
+substitutes manual PDF reading for extraction, skips review, or fills PDFs
+before the required review gate has not followed this `AGENTS.md` contract.
 
 ## Case Artifact Layout
 
@@ -427,9 +503,11 @@ print(describe_field("1040", "other_taxes"))
 #### Critical fields with known agent pitfalls
 
 - `1040.tax_before_credits` — role is `computed_input`. The 1040 processor
-  does NOT compute income tax from tax tables. The agent MUST compute it from
-  the 2025 brackets using taxable income (line 15). Leaving this at `0` when
-  taxable income is positive will produce an incorrect return.
+  does NOT compute income tax. The agent MUST compute TY2025 Form 1040 line
+  `16` with the shared helper path in `src.federal_income_tax`, using the
+  qualified-dividends/capital-gain worksheet when applicable. Load
+  `workspace/FORM_1040_2025_TAX.md` when you need this field. Leaving this at
+  `0` when taxable income is positive will produce an incorrect return.
 - `1040.other_taxes` — role is `cross_form`, source is Schedule SE line `12`
   (or Schedule 2 line `21`). This is the **full** self-employment tax, NOT the
   deductible half (line `13`). Using the deductible half here is a common error.

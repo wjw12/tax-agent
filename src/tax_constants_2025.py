@@ -91,6 +91,24 @@ QBI_2025 = {
 }
 
 
+QDCG_2025 = {
+    "zero_rate_threshold": {
+        "single": Decimal("48350"),
+        "married_filing_separately": Decimal("48350"),
+        "married_filing_jointly": Decimal("96700"),
+        "qualifying_surviving_spouse": Decimal("96700"),
+        "head_of_household": Decimal("64750"),
+    },
+    "fifteen_rate_threshold": {
+        "single": Decimal("533400"),
+        "married_filing_separately": Decimal("300000"),
+        "married_filing_jointly": Decimal("600050"),
+        "qualifying_surviving_spouse": Decimal("600050"),
+        "head_of_household": Decimal("566700"),
+    },
+}
+
+
 FORM_8962_2025 = {
     "federal_poverty_line_table_year": 2024,
     "coverage_month_definition_changed": True,
@@ -199,3 +217,11 @@ def qbi_form_8995_threshold(filing_status: str) -> Decimal:
 
 def education_credit_phaseout(credit_key: str, filing_status: str) -> dict[str, Decimal]:
     return EDUCATION_CREDITS_2025[credit_key]["phaseout"][filing_status_bucket(filing_status)]
+
+
+def qdcg_zero_rate_threshold(filing_status: str) -> Decimal:
+    return QDCG_2025["zero_rate_threshold"][filing_status]
+
+
+def qdcg_fifteen_rate_threshold(filing_status: str) -> Decimal:
+    return QDCG_2025["fifteen_rate_threshold"][filing_status]

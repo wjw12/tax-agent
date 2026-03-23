@@ -170,6 +170,15 @@ for wire in get_wires_for_target("1040"):
 - `1040.tax_before_credits` left at `0` when taxable income is positive. The
   field metadata classifies this as `computed_input` and notes that the
   processor does not compute it.
+- `1040.tax_before_credits` computed with ordinary brackets even though Form
+  1040 line `3a` is nonzero or Schedule D line `15` and line `16` are both
+  gains. Validate line `16` with the shared helper path in
+  [FORM_1040_2025_TAX.md](./FORM_1040_2025_TAX.md).
+- `1040.capital_gain_or_loss` used as a direct-source capital gain
+  distribution field instead of an explicitly assembled final line `7` amount.
+- `1040.requires_schedule_d_tax_worksheet` saved as `false` even though
+  `schedule_d_line_18`, `schedule_d_line_19`, or `has_form_4952_line_4g`
+  requires the Schedule D Tax Worksheet path.
 - `1040.schedule_1_additional_income` that does not match Schedule 1 line `10`.
 - `1040.schedule_1_adjustments` that does not match the deductible half of
   self-employment tax from the registered workflow.

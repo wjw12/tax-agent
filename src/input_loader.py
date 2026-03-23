@@ -8,8 +8,8 @@ from pathlib import Path
 
 from .audit_models import FormAuditSidecar
 from .core import to_decimal
-from .federal_income_tax import compute_ordinary_income_tax_2025
-from .models import Form1040NRInput
+from .federal_income_tax import compute_form_1040_tax_2025, compute_ordinary_income_tax_2025
+from .models import Form1040Input, Form1040NRInput, Form1040SRInput, ScheduleDInput
 from .models import BaseFormInput, Form8995AInput, Form8995Input, ScheduleCInput, ScheduleSEInput
 from .qbi import build_qbi_business_assembly_from_forms, validate_qbi_form_input_2025
 from .registry import FORM_DEFINITIONS, compute_form, parse_form_input
@@ -78,6 +78,128 @@ def _validate_live_1040_nr_payload(path: Path, payload: Form1040NRInput) -> None
     if payload.tax_before_credits != expected_tax:
         raise ValueError(
             "Live 1040-NR payload failed tax validation for "
+            f"{path}: expected tax_before_credits {expected_tax}, found {payload.tax_before_credits}"
+        )
+
+
+def _load_live_schedule_d_lines(tax_year_dir: Path) -> tuple[Decimal, Decimal, Decimal, bool]:
+    schedule_d_path = tax_year_dir / FORM_DEFINITIONS["1040-Schedule-D"].sample_json
+    if not schedule_d_path.exists():
+        return Decimal("0"), Decimal("0"), Decimal("0"), False
+    schedule_d = _load_parsed_form(schedule_d_path, validation_mode="live")
+    if not isinstance(schedule_d, ScheduleDInput):
+        return Decimal("0"), Decimal("0"), Decimal("0"), False
+    result = compute_form(schedule_d)
+    return result.get_line("15"), result.get_line("16"), result.get_line("21"), True
+
+
+def _assemble_form_1040_line_7_amount(
+    *,
+    has_schedule_d: bool,
+    schedule_d_line_16: Decimal,
+    schedule_d_line_21: Decimal,
+    capital_gain_distributions: Decimal,
+) -> Decimal:
+    if has_schedule_d:
+        if schedule_d_line_16 < Decimal("0"):
+            return -schedule_d_line_21
+        return schedule_d_line_16
+    return capital_gain_distributions
+
+
+def _derive_requires_schedule_d_tax_worksheet(
+    payload: Form1040Input | Form1040SRInput,
+    *,
+    schedule_d_line_15: Decimal,
+    schedule_d_line_16: Decimal,
+) -> bool:
+    if payload.has_form_4952_line_4g:
+        return True
+    if schedule_d_line_15 <= Decimal("0") or schedule_d_line_16 <= Decimal("0"):
+        return False
+    return payload.schedule_d_line_18 > Decimal("0") or payload.schedule_d_line_19 > Decimal("0")
+
+
+def _validate_live_1040_payload(path: Path, payload: Form1040Input | Form1040SRInput) -> None:
+    schedule_d_line_15, schedule_d_line_16, schedule_d_line_21, has_schedule_d = _load_live_schedule_d_lines(path.parent)
+    expected_line_7 = _assemble_form_1040_line_7_amount(
+        has_schedule_d=has_schedule_d,
+        schedule_d_line_16=schedule_d_line_16,
+        schedule_d_line_21=schedule_d_line_21,
+        capital_gain_distributions=payload.capital_gain_distributions,
+    )
+    if payload.capital_gain_or_loss != expected_line_7:
+        raise ValueError(
+            "Live 1040 payload failed line 7 validation for "
+            f"{path}: expected capital_gain_or_loss {expected_line_7}, found {payload.capital_gain_or_loss}"
+        )
+    if has_schedule_d and payload.capital_gain_distributions != Decimal("0"):
+        raise ValueError(
+            "Live 1040 payload must keep capital_gain_distributions at 0 when Schedule D is present "
+            f"for {path}"
+        )
+    if not has_schedule_d and (payload.schedule_d_line_18 != Decimal("0") or payload.schedule_d_line_19 != Decimal("0")):
+        raise ValueError(
+            "Live 1040 payload provided Schedule D worksheet trigger lines without a saved Schedule D "
+            f"for {path}"
+        )
+
+    derived_requires_schedule_d_tax_worksheet = _derive_requires_schedule_d_tax_worksheet(
+        payload,
+        schedule_d_line_15=schedule_d_line_15,
+        schedule_d_line_16=schedule_d_line_16,
+    )
+    if payload.requires_schedule_d_tax_worksheet != derived_requires_schedule_d_tax_worksheet:
+        raise ValueError(
+            "Live 1040 payload has inconsistent requires_schedule_d_tax_worksheet for "
+            f"{path}: payload={payload.requires_schedule_d_tax_worksheet!r}, "
+            f"derived={derived_requires_schedule_d_tax_worksheet!r}"
+        )
+    if derived_requires_schedule_d_tax_worksheet:
+        trigger_facts: list[str] = []
+        if payload.has_form_4952_line_4g:
+            trigger_facts.append("has_form_4952_line_4g=true")
+        if payload.schedule_d_line_18 > Decimal("0"):
+            trigger_facts.append(f"schedule_d_line_18={payload.schedule_d_line_18}")
+        if payload.schedule_d_line_19 > Decimal("0"):
+            trigger_facts.append(f"schedule_d_line_19={payload.schedule_d_line_19}")
+        trigger_facts.append(f"schedule_d_line_15={schedule_d_line_15}")
+        trigger_facts.append(f"schedule_d_line_16={schedule_d_line_16}")
+        raise ValueError(
+            "Live 1040 payload requires the Schedule D Tax Worksheet for "
+            f"{path}: {', '.join(trigger_facts)}"
+        )
+
+    deduction = max(payload.itemized_deductions, payload.standard_deduction)
+    total_income = (
+        payload.wages
+        + payload.taxable_interest
+        + payload.ordinary_dividends
+        + payload.taxable_ira_distributions
+        + payload.taxable_pension_annuity_income
+        + payload.taxable_social_security_benefits
+        + expected_line_7
+        + payload.schedule_1_additional_income
+    )
+    agi = total_income - payload.schedule_1_adjustments
+    taxable_income = max(Decimal("0"), agi - deduction - payload.qbi_deduction)
+
+    try:
+        expected_tax = compute_form_1040_tax_2025(
+            payload.filing_status,
+            taxable_income,
+            qualified_dividends=payload.qualified_dividends,
+            capital_gain_distributions=payload.capital_gain_distributions if not has_schedule_d else Decimal("0"),
+            schedule_d_line_15=schedule_d_line_15,
+            schedule_d_line_16=schedule_d_line_16,
+            uses_form_2555=payload.uses_form_2555,
+            requires_schedule_d_tax_worksheet=derived_requires_schedule_d_tax_worksheet,
+        )
+    except ValueError as exc:
+        raise ValueError(f"Live 1040 payload failed tax-path validation for {path}: {exc}") from exc
+    if payload.tax_before_credits != expected_tax:
+        raise ValueError(
+            "Live 1040 payload failed tax validation for "
             f"{path}: expected tax_before_credits {expected_tax}, found {payload.tax_before_credits}"
         )
 
@@ -152,6 +274,8 @@ def load_form_input(path: str | Path) -> BaseFormInput:
             except Exception as exc:
                 raise ValueError(f"Invalid audit sidecar for {resolved}: {exc}") from exc
             _validate_payload_against_sidecar_sources(parsed, audit_sidecar)
+        if isinstance(parsed, (Form1040Input, Form1040SRInput)):
+            _validate_live_1040_payload(resolved, parsed)
         if isinstance(parsed, Form1040NRInput):
             _validate_live_1040_nr_payload(resolved, parsed)
     if validation_mode == "live" and isinstance(parsed, (Form8995Input, Form8995AInput)):

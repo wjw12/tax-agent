@@ -240,7 +240,13 @@ class Form1040Input(BaseFormInput):
     taxable_pension_annuity_income: Decimal = Decimal("0")
     social_security_benefits: Decimal = Decimal("0")
     taxable_social_security_benefits: Decimal = Decimal("0")
+    capital_gain_distributions: Decimal = Decimal("0")
     capital_gain_or_loss: Decimal = Decimal("0")
+    uses_form_2555: bool = False
+    schedule_d_line_18: Decimal = Decimal("0")
+    schedule_d_line_19: Decimal = Decimal("0")
+    has_form_4952_line_4g: bool = False
+    requires_schedule_d_tax_worksheet: bool = False
     schedule_1_additional_income: Decimal = Decimal("0")
     schedule_1_adjustments: Decimal = Decimal("0")
     itemized_deductions: Decimal = Decimal("0")

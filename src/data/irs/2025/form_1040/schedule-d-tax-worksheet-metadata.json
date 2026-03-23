@@ -1,0 +1,83 @@
+{
+  "exceptions": [
+    "Do not use this worksheet when Schedule D line 15 or line 16 is zero or less and there are no qualified dividends.",
+    "Do not use this worksheet when Form 1040 line 15 is zero or less."
+  ],
+  "source_pages": [
+    15,
+    16
+  ],
+  "source_pdf": "i1040sd--2025.pdf",
+  "tax_year": 2025,
+  "thresholds": {
+    "line_15_zero_rate_threshold": {
+      "head_of_household": "64750",
+      "married_filing_jointly": "96700",
+      "married_filing_separately": "48350",
+      "qualifying_surviving_spouse": "96700",
+      "single": "48350"
+    },
+    "line_19_fifteen_rate_cutoff": {
+      "head_of_household": "197300",
+      "married_filing_jointly": "394600",
+      "married_filing_separately": "197300",
+      "qualifying_surviving_spouse": "394600",
+      "single": "197300"
+    },
+    "line_26_twenty_rate_cutoff": {
+      "head_of_household": "566700",
+      "married_filing_jointly": "600050",
+      "married_filing_separately": "300000",
+      "qualifying_surviving_spouse": "600050",
+      "single": "533400"
+    }
+  },
+  "trigger_rules": {
+    "required_when_any": [
+      {
+        "all": [
+          {
+            "field": "schedule_d_line_18",
+            "operator": ">",
+            "value": 0
+          },
+          {
+            "field": "schedule_d_line_15",
+            "operator": ">",
+            "value": 0
+          },
+          {
+            "field": "schedule_d_line_16",
+            "operator": ">",
+            "value": 0
+          }
+        ]
+      },
+      {
+        "all": [
+          {
+            "field": "schedule_d_line_19",
+            "operator": ">",
+            "value": 0
+          },
+          {
+            "field": "schedule_d_line_15",
+            "operator": ">",
+            "value": 0
+          },
+          {
+            "field": "schedule_d_line_16",
+            "operator": ">",
+            "value": 0
+          }
+        ]
+      },
+      {
+        "field": "has_form_4952_line_4g",
+        "operator": "==",
+        "value": true
+      }
+    ]
+  },
+  "worksheet_name": "Schedule D Tax Worksheet"
+}

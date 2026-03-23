@@ -111,6 +111,12 @@ If the payload includes `Form 8995` or `Form 8995-A`, verify it with
 PDF when the shared TY2025 QBI workflow in
 [AGENTS.md](../AGENTS.md) or the executable validation fails.
 
+If the payload includes `Form 1040` or `Form 1040-SR`, verify that
+`tax_before_credits` was computed with the canonical TY2025 helper path in
+[FORM_1040_2025_TAX.md](./FORM_1040_2025_TAX.md). Do not render a 1040 packet
+with a hand-authored line `16` when qualified dividends or eligible long-term
+capital gain are present.
+
 ---
 
 ## Preconditions

@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-03-23T04:19:50.501193+00:00",
+  "generated_outputs": [
+    "src/data/irs/2025/form_1040/tax-table.json",
+    "src/data/irs/2025/form_1040/tax-computation-worksheet.json",
+    "src/data/irs/2025/form_1040/qdcg-worksheet-metadata.json",
+    "src/data/irs/2025/form_1040/schedule-d-tax-worksheet-metadata.json",
+    "src/data/irs/2025/form_1040/source-manifest.json"
+  ],
+  "sources": [
+    {
+      "artifact_key": "qualified_dividends_and_capital_gain_tax_worksheet",
+      "description": "Qualified Dividends and Capital Gain Tax Worksheet for Form 1040 line 16.",
+      "fetched_at": "2026-03-23T04:10:30.280917+00:00",
+      "page_numbers": [
+        38
+      ],
+      "pdf_filename": "i1040gi--2025.pdf",
+      "sha256": "482e9c487c608f1bbeaceef35bc3c0933e8b35443cfff447e4279d590468364a",
+      "source_url": "https://www.irs.gov/pub/irs-pdf/i1040gi.pdf"
+    },
+    {
+      "artifact_key": "tax_table",
+      "description": "2025 tax table pages used for Form 1040 line 16 when rounded taxable income is below $100,000.",
+      "fetched_at": "2026-03-23T04:10:30.280917+00:00",
+      "page_numbers": [
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79
+      ],
+      "pdf_filename": "i1040gi--2025.pdf",
+      "sha256": "482e9c487c608f1bbeaceef35bc3c0933e8b35443cfff447e4279d590468364a",
+      "source_url": "https://www.irs.gov/pub/irs-pdf/i1040gi.pdf"
+    },
+    {
+      "artifact_key": "tax_computation_worksheet",
+      "description": "2025 tax computation worksheet page used for Form 1040 line 16 when rounded taxable income is $100,000 or more.",
+      "fetched_at": "2026-03-23T04:10:30.280917+00:00",
+      "page_numbers": [
+        80
+      ],
+      "pdf_filename": "i1040gi--2025.pdf",
+      "sha256": "482e9c487c608f1bbeaceef35bc3c0933e8b35443cfff447e4279d590468364a",
+      "source_url": "https://www.irs.gov/pub/irs-pdf/i1040gi.pdf"
+    },
+    {
+      "artifact_key": "schedule_d_tax_worksheet",
+      "description": "Schedule D Tax Worksheet pages and trigger rules for special capital-gain cases.",
+      "fetched_at": "2026-03-23T04:10:30.172899+00:00",
+      "page_numbers": [
+        15,
+        16
+      ],
+      "pdf_filename": "i1040sd--2025.pdf",
+      "sha256": "650643a686378b7573e4f4476ee4e7c9f9bab1384314dca32dc336f7b2276002",
+      "source_url": "https://www.irs.gov/pub/irs-pdf/i1040sd.pdf"
+    }
+  ],
+  "tax_year": 2025
+}

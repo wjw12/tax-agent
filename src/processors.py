@@ -71,7 +71,17 @@ def _phaseout_fraction(value: Decimal, start: Decimal, end: Decimal) -> Decimal:
     return (end - value) / (end - start)
 
 
+def _form_1040_line_7_amount(
+    capital_gain_or_loss: Decimal,
+    capital_gain_distributions: Decimal,
+) -> Decimal:
+    if capital_gain_or_loss != Decimal("0"):
+        return capital_gain_or_loss
+    return capital_gain_distributions
+
+
 def process_1040(data: Form1040Input) -> FormComputation:
+    line_7_amount = _form_1040_line_7_amount(data.capital_gain_or_loss, data.capital_gain_distributions)
     deduction = max(data.standard_deduction, data.itemized_deductions)
     total_income = (
         data.wages
@@ -80,7 +90,7 @@ def process_1040(data: Form1040Input) -> FormComputation:
         + data.taxable_ira_distributions
         + data.taxable_pension_annuity_income
         + data.taxable_social_security_benefits
-        + data.capital_gain_or_loss
+        + line_7_amount
         + data.schedule_1_additional_income
     )
     agi = total_income - data.schedule_1_adjustments
@@ -114,7 +124,7 @@ def process_1040(data: Form1040Input) -> FormComputation:
     form.add_line("5b", "Taxable pensions and annuities", data.taxable_pension_annuity_income)
     form.add_line("6a", "Social security benefits", data.social_security_benefits)
     form.add_line("6b", "Taxable social security benefits", data.taxable_social_security_benefits)
-    form.add_line("7", "Capital gain or loss", data.capital_gain_or_loss)
+    form.add_line("7", "Capital gain or loss", line_7_amount)
     form.add_line("8", "Other income from Schedule 1", data.schedule_1_additional_income)
     form.add_line("9", "Total income", total_income, formula="1a+2b+3b+4b+5b+6b+7+8")
     form.add_line("10", "Adjustments to income", data.schedule_1_adjustments)

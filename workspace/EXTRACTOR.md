@@ -107,6 +107,16 @@ Common pitfalls this prevents:
   full SE tax. The field metadata notes explicitly warn about this.
 - Leaving `1040.tax_before_credits` at `0`. The field metadata notes explain
   that the processor does not compute income tax from tax tables.
+- Computing `1040.tax_before_credits` with ordinary brackets when the 2025
+  qualified-dividends/capital-gain worksheet applies. Use
+  [FORM_1040_2025_TAX.md](./FORM_1040_2025_TAX.md) and the shared helper in
+  `src.federal_income_tax`.
+- Putting direct capital gain distributions into `1040.capital_gain_or_loss`
+  instead of `1040.capital_gain_distributions` and an explicitly assembled line
+  `7` amount.
+- Leaving `1040.schedule_d_line_18`, `1040.schedule_d_line_19`, or
+  `1040.has_form_4952_line_4g` unresolved when a live case may require the
+  Schedule D Tax Worksheet.
 - Processing forms in the wrong order and missing cross-form dependencies.
 
 ## QBI Extraction Rules

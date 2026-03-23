@@ -94,11 +94,47 @@ FIELD_METADATA: dict[str, dict[str, FieldMeta]] = {
             description="Computed from Social Security Benefits Worksheet",
             notes="The processor does NOT derive this; the agent must compute it.",
         ),
+        "capital_gain_distributions": FieldMeta(
+            FieldRole.SOURCE,
+            description="Direct capital gain distributions when Schedule D is not required",
+            notes="Use the direct-source path only when Schedule D is not required for line 7.",
+        ),
         "capital_gain_or_loss": FieldMeta(
-            FieldRole.CROSS_FORM,
-            description="Schedule D line 16 (or line 21 loss deduction)",
+            FieldRole.COMPUTED_INPUT,
+            description="Final Form 1040 line 7 amount after Schedule D/direct-distribution assembly",
             cross_form_ref=CrossFormRef("1040-Schedule-D", "16"),
-            notes="Use 0 when no capital transactions exist.",
+            alternative_refs=(CrossFormRef("1040-Schedule-D", "21"),),
+            notes=(
+                "Assemble line 7 explicitly. If Schedule D exists, use the Schedule D result "
+                "(and the line 21 loss cap when line 16 is a loss). Otherwise use "
+                "capital_gain_distributions. Do not overload this field as both a Schedule D "
+                "wire and a direct-source distribution amount."
+            ),
+        ),
+        "uses_form_2555": FieldMeta(
+            FieldRole.TAXPAYER_FACT,
+            description="Whether the return uses Form 2555",
+            notes="Form 2555 cases cannot use the standard TY2025 helper without the Foreign Earned Income Tax Worksheet.",
+        ),
+        "schedule_d_line_18": FieldMeta(
+            FieldRole.SOURCE,
+            description="Schedule D line 18",
+            notes="Capture explicitly for Schedule D Tax Worksheet trigger validation.",
+        ),
+        "schedule_d_line_19": FieldMeta(
+            FieldRole.SOURCE,
+            description="Schedule D line 19",
+            notes="Capture explicitly for Schedule D Tax Worksheet trigger validation.",
+        ),
+        "has_form_4952_line_4g": FieldMeta(
+            FieldRole.SOURCE,
+            description="Whether Form 4952 line 4g is present",
+            notes="Capture explicitly for Schedule D Tax Worksheet trigger validation even if Schedule D is not filed.",
+        ),
+        "requires_schedule_d_tax_worksheet": FieldMeta(
+            FieldRole.DERIVED,
+            description="Derived Schedule D Tax Worksheet trigger flag",
+            notes="Derive deterministically from Form 4952 line 4g, Schedule D lines 18/19, and Schedule D lines 15/16.",
         ),
         "schedule_1_additional_income": FieldMeta(
             FieldRole.CROSS_FORM,
@@ -135,9 +171,12 @@ FIELD_METADATA: dict[str, dict[str, FieldMeta]] = {
             description="Income tax from tax tables or qualified dividends worksheet",
             notes=(
                 "CRITICAL: The 1040 processor does NOT compute this. "
-                "The agent MUST compute the income tax from the 2025 tax "
-                "tables using taxable_income (line 15). Leaving this at 0 "
-                "when taxable income > 0 will produce an incorrect return."
+                "The agent MUST compute TY2025 Form 1040 line 16 using "
+                "the shared helper in src.federal_income_tax. Use the "
+                "ordinary brackets only when the qualified-dividends/capital-"
+                "gain worksheet does not apply. See workspace/"
+                "FORM_1040_2025_TAX.md. Leaving this at 0 when taxable "
+                "income > 0 will produce an incorrect return."
             ),
         ),
         "nonrefundable_credits": FieldMeta(

@@ -1,0 +1,172 @@
+{
+  "filing_statuses": {
+    "head_of_household": [
+      {
+        "income_max": 103350,
+        "income_min": 100000,
+        "rate": "0.22",
+        "subtraction_amount": "6,825.00"
+      },
+      {
+        "income_max": 197300,
+        "income_min": 103351,
+        "rate": "0.24",
+        "subtraction_amount": "8,892.00"
+      },
+      {
+        "income_max": 250500,
+        "income_min": 197301,
+        "rate": "0.32",
+        "subtraction_amount": "24,676.00"
+      },
+      {
+        "income_max": 626350,
+        "income_min": 250501,
+        "rate": "0.35",
+        "subtraction_amount": "32,191.00"
+      },
+      {
+        "income_max": null,
+        "income_min": 626351,
+        "rate": "0.37",
+        "subtraction_amount": "44,718.00"
+      }
+    ],
+    "married_filing_jointly": [
+      {
+        "income_max": 206700,
+        "income_min": 100000,
+        "rate": "0.22",
+        "subtraction_amount": "10,172.00"
+      },
+      {
+        "income_max": 394600,
+        "income_min": 206701,
+        "rate": "0.24",
+        "subtraction_amount": "14,306.00"
+      },
+      {
+        "income_max": 501050,
+        "income_min": 394601,
+        "rate": "0.32",
+        "subtraction_amount": "45,874.00"
+      },
+      {
+        "income_max": 751600,
+        "income_min": 501051,
+        "rate": "0.35",
+        "subtraction_amount": "60,905.50"
+      },
+      {
+        "income_max": null,
+        "income_min": 751601,
+        "rate": "0.37",
+        "subtraction_amount": "75,937.50"
+      }
+    ],
+    "married_filing_separately": [
+      {
+        "income_max": 103350,
+        "income_min": 100000,
+        "rate": "0.22",
+        "subtraction_amount": "5,086.00"
+      },
+      {
+        "income_max": 197300,
+        "income_min": 103351,
+        "rate": "0.24",
+        "subtraction_amount": "7,153.00"
+      },
+      {
+        "income_max": 250525,
+        "income_min": 197301,
+        "rate": "0.32",
+        "subtraction_amount": "22,937.00"
+      },
+      {
+        "income_max": 375800,
+        "income_min": 250526,
+        "rate": "0.35",
+        "subtraction_amount": "30,452.75"
+      },
+      {
+        "income_max": null,
+        "income_min": 375801,
+        "rate": "0.37",
+        "subtraction_amount": "37,968.75"
+      }
+    ],
+    "qualifying_surviving_spouse": [
+      {
+        "income_max": 206700,
+        "income_min": 100000,
+        "rate": "0.22",
+        "subtraction_amount": "10,172.00"
+      },
+      {
+        "income_max": 394600,
+        "income_min": 206701,
+        "rate": "0.24",
+        "subtraction_amount": "14,306.00"
+      },
+      {
+        "income_max": 501050,
+        "income_min": 394601,
+        "rate": "0.32",
+        "subtraction_amount": "45,874.00"
+      },
+      {
+        "income_max": 751600,
+        "income_min": 501051,
+        "rate": "0.35",
+        "subtraction_amount": "60,905.50"
+      },
+      {
+        "income_max": null,
+        "income_min": 751601,
+        "rate": "0.37",
+        "subtraction_amount": "75,937.50"
+      }
+    ],
+    "single": [
+      {
+        "income_max": 103350,
+        "income_min": 100000,
+        "rate": "0.22",
+        "subtraction_amount": "5,086.00"
+      },
+      {
+        "income_max": 197300,
+        "income_min": 103351,
+        "rate": "0.24",
+        "subtraction_amount": "7,153.00"
+      },
+      {
+        "income_max": 250525,
+        "income_min": 197301,
+        "rate": "0.32",
+        "subtraction_amount": "22,937.00"
+      },
+      {
+        "income_max": 626350,
+        "income_min": 250526,
+        "rate": "0.35",
+        "subtraction_amount": "30,452.75"
+      },
+      {
+        "income_max": null,
+        "income_min": 626351,
+        "rate": "0.37",
+        "subtraction_amount": "42,979.75"
+      }
+    ]
+  },
+  "formula": "tax = rounded_taxable_income * rate - subtraction_amount",
+  "income_max_inclusive": true,
+  "income_min_inclusive": true,
+  "source_pages": [
+    80
+  ],
+  "source_pdf": "i1040gi--2025.pdf",
+  "tax_year": 2025
+}
