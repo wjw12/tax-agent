@@ -1,3 +1,0 @@
-You are building a tax filing agent. The main agent instruction is in `tax/AGENTS.md` and it references other code and subagent instructions.
-
-There are some knowledge that are already embedded into GPT model before 2025 about general tax filing knowledge, method, and special notices prior to 2025 and I don't want to include these redundant info in the instructions of my agent. When designing agent instructions, we should add info about things that are specific to 2025 because we only need to add information that are outside of LLM agent's world knowledge (assuming the knowledge cutoff is early-2025)
